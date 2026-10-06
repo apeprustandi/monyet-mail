@@ -447,6 +447,7 @@ const zh = {
     templateEnvelope: '拆信',
     templateTerminal: '邮件终端',
     templatePassport: '邮政护照',
+    templateModern: '现代简洁',
     envelopeNote: '私人信件，请交由收件人亲启。',
     terminalHint: '输入身份凭据以继续建立安全会话。',
     passportRoute: '身份签发 · 邮件通行',

@@ -447,6 +447,7 @@ const en = {
     templateEnvelope: 'Open Letter',
     templateTerminal: 'Mail Terminal',
     templatePassport: 'Postal Passport',
+    templateModern: 'Modern Clean',
     envelopeNote: 'Private correspondence. To be opened by the addressee only.',
     terminalHint: 'Enter credentials to establish a secure session.',
     passportRoute: 'Identity issued · Mail cleared',
