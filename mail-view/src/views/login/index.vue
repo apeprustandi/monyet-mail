@@ -322,13 +322,7 @@ AUTH  WAITING
         </Transition>
       </div>
 
-      <!-- Footer below card -->
-      <div class="page-footer" v-motion :initial="{ opacity: 0 }" :enter="{ opacity: 1, transition: { delay: 300 } }">
-        <a href="https://github.com/PastKing/xi-mail" target="_blank">
-          <Icon icon="mingcute:github-line" width="14" height="14" />
-          <span>{{ $t('openSource') }}</span>
-        </a>
-      </div>
+
     </div>
 
     <!-- OAuth bind dialog -->
@@ -391,7 +385,7 @@ const userStore = useUserStore();
 const uiStore = useUiStore();
 const settingStore = useSettingStore();
 const serverStore = useServerStore();
-const loginTemplate = computed(() => settingStore.settings?.loginTemplate || 'gradient');
+const loginTemplate = computed(() => settingStore.settings?.loginTemplate || 'modern');
 const currentRegKeyHint = computed(() => {
   const s = settingStore.settings;
   if (!s) return '';
@@ -1195,6 +1189,7 @@ function submitRegister() {
 @import './templates/envelope';
 @import './templates/terminal';
 @import './templates/passport';
+@import './templates/modern';
 
 /* Keep the registration layout compact even when a template customizes
    the generic .fields container. These rules intentionally follow imports. */

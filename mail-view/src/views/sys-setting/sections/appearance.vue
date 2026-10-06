@@ -184,6 +184,7 @@ const loginTemplates = computed(() => [
   { id: 'envelope',      label: t('templateEnvelope')      },
   { id: 'terminal',      label: t('templateTerminal')      },
   { id: 'passport',      label: t('templatePassport')      },
+  { id: 'modern',        label: t('templateModern')        },
 ])
 
 function applyColorTheme(id) {
