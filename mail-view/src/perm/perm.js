@@ -46,6 +46,7 @@ const sysSettingSections = [
     'integration',
     'sub-workers',
     'appearance',
+    'api-docs',
     'servers',
     'about'
 ]
