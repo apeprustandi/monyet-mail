@@ -1,5 +1,5 @@
 <template>
-  <el-config-provider :locale="settingStore.lang === 'zh' ? zhCn : null">
+  <el-config-provider :locale="settingStore.lang === 'id' ? idId : enUs">
     <router-view />
   </el-config-provider>
 </template>
@@ -8,7 +8,8 @@ import { useI18n } from "vue-i18n";
 import { watch } from "vue";
 import {useSettingStore} from "@/store/setting.js";
 const settingStore = useSettingStore()
-import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import enUs from 'element-plus/es/locale/lang/en';
+import idId from 'element-plus/es/locale/lang/id';
 import('@/icons/index.js')
 const { locale } = useI18n()
 locale.value = settingStore.lang

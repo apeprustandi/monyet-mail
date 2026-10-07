@@ -21,7 +21,7 @@ export async function init() {
     const token = serverStore.getToken();
     if (!settingStore.lang) {
         let lang = navigator.language.split('-')[0]
-        lang = lang === 'zh' ? lang : 'en'
+        lang = lang === 'id' ? lang : 'en'
         settingStore.lang = lang
     }
 

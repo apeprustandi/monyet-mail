@@ -158,7 +158,7 @@
                                  :placeholder="$t('total')">
                 </el-input-number>
                   <el-select v-model="form.sendType" placeholder="Select" size="small"
-                             :style="`width: ${ locale === 'zh' ? 65 : 85 }px;margin-left: 5px;`">
+                             :style="`width: ${ locale === 'id' ? 65 : 85 }px;margin-left: 5px;`">
                     <el-option :label="$t('total')" value="count"/>
                     <el-option :label="$t('daily')" value="day"/>
                     <el-option :label="$t('internal')" value="internal"/>

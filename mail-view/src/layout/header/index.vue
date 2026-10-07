@@ -10,8 +10,8 @@
     </div>
 
     <div class="toolbar">
-      <button class="tool-btn lang-btn" @click="toggleLang" :aria-label="settingStore.lang === 'zh' ? 'Switch to English' : '切换为中文'">
-        <span class="lang-label">{{ settingStore.lang === 'zh' ? 'EN' : '中' }}</span>
+      <button class="tool-btn lang-btn" @click="toggleLang" :aria-label="settingStore.lang === 'id' ? 'Switch to English' : 'Ganti ke Indonesia'">
+        <span class="lang-label">{{ settingStore.lang === 'id' ? 'EN' : 'ID' }}</span>
       </button>
 
       <button v-if="uiStore.dark" class="tool-btn" @click="openDark($event)" aria-label="Light mode">
@@ -185,10 +185,10 @@ function switchDark(nextIsDark, root) {
 }
 
 function toggleLang() {
-  const next = settingStore.lang === 'zh' ? 'en' : 'zh'
+  const next = settingStore.lang === 'id' ? 'en' : 'id'
   settingStore.lang = next
   i18n.global.locale.value = next
-  setExtend(next === 'zh' ? 'zh-cn' : 'en')
+  setExtend(next === 'id' ? 'id' : 'en')
   saveLang(next).catch(() => {})
 }
 
