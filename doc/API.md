@@ -1,6 +1,6 @@
 # Dokumentasi API Monyet Mail
 
-Base URL: `https://monyet-mail.receh34.workers.dev/api`
+Base URL: `https://monyet.dev/api`
 
 Semua endpoint diawali `/api`. Response selalu JSON:
 
@@ -41,7 +41,7 @@ Ambil daftar email milik satu alamat. Cocok untuk script auto-cek OTP/kode verif
 | offset | Tidak | 0 | Untuk pagination |
 
 ```bash
-curl -X GET https://monyet-mail.receh34.workers.dev/api/admin/mails?address=user@monyet.dev&limit=10 \
+curl -X GET https://monyet.dev/api/admin/mails?address=user@monyet.dev&limit=10 \
   -H "x-admin-auth: token_rahasia_kamu"
 ```
 
@@ -84,7 +84,7 @@ Buat/inject email manual ke inbox alamat tertentu. Alamat tujuan harus sudah ter
 | name | Tidak | "" | Nama pengirim |
 
 ```bash
-curl -X POST https://monyet-mail.receh34.workers.dev/api/admin/mails \
+curl -X POST https://monyet.dev/api/admin/mails \
   -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"toEmail":"user@monyet.dev","subject":"Halo","text":"Isi pesan"}'
@@ -108,13 +108,13 @@ Hapus email. Bisa by ID (beberapa sekaligus) atau hapus semua milik satu alamat.
 
 ```bash
 # Hapus by ID
-curl -X DELETE https://monyet-mail.receh34.workers.dev/api/admin/mails \
+curl -X DELETE https://monyet.dev/api/admin/mails \
   -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"emailIds":"1,2,3"}'
 
 # Hapus semua milik satu alamat
-curl -X DELETE https://monyet-mail.receh34.workers.dev/api/admin/mails \
+curl -X DELETE https://monyet.dev/api/admin/mails \
   -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"address":"user@monyet.dev"}'
@@ -132,7 +132,7 @@ Tandai email sudah dibaca atau belum dibaca.
 | unread | Tidak | 0 | 0 = sudah dibaca, 1 = belum dibaca |
 
 ```bash
-curl -X PUT https://monyet-mail.receh34.workers.dev/api/admin/mails/read \
+curl -X PUT https://monyet.dev/api/admin/mails/read \
   -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"emailIds":"1,2,3","unread":0}'
@@ -151,7 +151,7 @@ Lihat daftar alamat mailbox. Bisa filter milik user tertentu.
 | offset | Tidak | 0 | Untuk pagination |
 
 ```bash
-curl -X GET https://monyet-mail.receh34.workers.dev/api/admin/accounts?userEmail=user@monyet.dev \
+curl -X GET https://monyet.dev/api/admin/accounts?userEmail=user@monyet.dev \
   -H "x-admin-auth: token_rahasia_kamu"
 ```
 
@@ -184,7 +184,7 @@ Buat alamat email baru untuk user tertentu. Bypass limit jumlah alamat (seperti 
 | userId | Salah satu | ID user (alternatif userEmail) |
 
 ```bash
-curl -X POST https://monyet-mail.receh34.workers.dev/api/admin/accounts \
+curl -X POST https://monyet.dev/api/admin/accounts \
   -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"email":"baru@monyet.dev","userEmail":"user@monyet.dev"}'
@@ -209,7 +209,7 @@ Hapus alamat mailbox (soft delete — bisa di-restore dengan POST lagi).
 | accountId | Salah satu | ID akun (alternatif email) |
 
 ```bash
-curl -X DELETE https://monyet-mail.receh34.workers.dev/api/admin/accounts \
+curl -X DELETE https://monyet.dev/api/admin/accounts \
   -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"email":"hapus@monyet.dev"}'
@@ -225,7 +225,7 @@ TOKEN="isi-global-token"
 ADDRESS="user@monyet.dev"
 
 curl -s -H "x-admin-auth: $TOKEN" \
-  "https://monyet-mail.receh34.workers.dev/api/admin/mails?address=$ADDRESS&limit=5" \
+  "https://monyet.dev/api/admin/mails?address=$ADDRESS&limit=5" \
   | python3 -c "
 import json,sys,re
 d = json.load(sys.stdin)
@@ -246,7 +246,7 @@ for m in d['results']:
 Endpoint di section ini butuh JWT token. Dapatkan via login:
 
 ```bash
-curl -X POST https://monyet-mail.receh34.workers.dev/api/login \
+curl -X POST https://monyet.dev/api/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@monyet.dev","password":"xxx"}'
 # → { "code": 0, "data": { "token": "eyJhbGciOi..." } }
