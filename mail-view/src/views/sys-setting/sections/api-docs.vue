@@ -19,12 +19,19 @@
       <el-button type="success" size="small" @click="saveToken" :disabled="!apiToken">Simpan</el-button>
     </div>
 
-    <div v-for="ep in endpoints" :key="ep.method + ep.path" class="ad-endpoint">
-      <div class="ad-head">
-        <span class="ad-method" :class="ep.method.toLowerCase()">{{ ep.method }}</span>
-        <code class="ad-path">/api{{ ep.path }}</code>
-      </div>
-      <p v-if="ep.summary" class="ad-summary">{{ ep.summary }}</p>
+    <el-collapse v-model="openPanels" class="ad-collapse">
+      <el-collapse-item
+        v-for="ep in endpoints" :key="ep.method + ep.path"
+        :name="ep.method + ep.path"
+        class="ad-endpoint"
+      >
+        <template #title>
+          <div class="ad-head">
+            <span class="ad-method" :class="ep.method.toLowerCase()">{{ ep.method }}</span>
+            <code class="ad-path">/api{{ ep.path }}</code>
+          </div>
+        </template>
+        <p v-if="ep.summary" class="ad-summary">{{ ep.summary }}</p>
 
       <div v-if="ep.params && ep.params.length" class="ad-block">
         <div class="ad-label">{{ ep.method === 'GET' ? 'Query Parameters' : 'Body Parameters (JSON)' }}</div>
@@ -100,13 +107,17 @@
           <pre v-if="ep._response" class="ad-code ad-response">{{ ep._response }}</pre>
         </div>
       </div>
-    </div>
+      </el-collapse-item>
+    </el-collapse>
 
-    <div class="ad-endpoint">
-      <div class="ad-head">
-        <Icon icon="mingcute:terminal-line" width="18" height="18" />
-        <span class="ad-path">Contoh Script: Cek OTP</span>
-      </div>
+    <el-collapse v-model="openPanels" class="ad-collapse">
+      <el-collapse-item name="otp-script" class="ad-endpoint">
+        <template #title>
+          <div class="ad-head">
+            <Icon icon="mingcute:terminal-line" width="18" height="18" />
+            <span class="ad-path">Contoh Script: Cek OTP</span>
+          </div>
+        </template>
       <div class="ad-label-row">
         <span class="ad-label">Bash + Python — ambil kode verifikasi dari email terbaru</span>
         <el-button size="small" type="primary" plain @click="copyText(otpScript)">
@@ -114,7 +125,8 @@
         </el-button>
       </div>
       <pre class="ad-code ad-curl">{{ otpScript }}</pre>
-    </div>
+      </el-collapse-item>
+    </el-collapse>
   </div>
 </template>
 
@@ -126,6 +138,7 @@ import { ElMessage } from "element-plus";
 import { ref } from "vue";
 
 const base = computed(() => window.location.origin);
+const openPanels = ref([]);
 const apiToken = ref(localStorage.getItem("monyet_admin_token") || "");
 
 function saveToken() {
@@ -393,10 +406,17 @@ const endpoints = computed(() => [
   .ad-desc { color: var(--el-text-color-secondary); margin: 0 0 20px; line-height: 1.8;
     code { background: var(--el-fill-color-light); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
     b { color: var(--el-text-color-primary); } }
+  .ad-collapse { border: none; --el-collapse-header-height: auto; }
+  .ad-collapse .el-collapse-item { margin-bottom: 12px; }
   .ad-endpoint {
     border: 1px solid var(--el-border-color); border-radius: 10px;
-    padding: 18px; margin-bottom: 16px; background: var(--el-bg-color);
+    background: var(--el-bg-color); overflow: hidden;
   }
+  .ad-endpoint .el-collapse-item__header {
+    padding: 14px 18px; border-bottom: none;
+  }
+  .ad-endpoint .el-collapse-item__wrap { border-top: 1px solid var(--el-border-color-light); }
+  .ad-endpoint .el-collapse-item__content { padding: 0 18px 18px; }
   .ad-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .ad-method {
     font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 5px;
