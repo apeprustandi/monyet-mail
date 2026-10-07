@@ -20,7 +20,18 @@ export default {
 			 return await r2Service.toObjResp( { env }, url.pathname.substring(1));
 		 }
 
-		if (env.assets) return env.assets.fetch(req);
+		if (env.assets) {
+			const res = await env.assets.fetch(req);
+			// Force no-cache for HTML so browsers always get fresh index.html
+			const ct = res.headers.get('content-type') || '';
+			if (ct.includes('text/html')) {
+				const headers = new Headers(res.headers);
+				headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+				headers.set('Pragma', 'no-cache');
+				return new Response(res.body, { status: res.status, headers });
+			}
+			return res;
+		}
 		return new Response('Xi-Mail API is running. Frontend is deployed separately.', {
 			status: 200, headers: { 'Content-Type': 'text/plain' }
 		});
