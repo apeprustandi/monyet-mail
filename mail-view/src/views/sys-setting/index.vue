@@ -57,7 +57,6 @@ const sections = computed(() => {
     { id: 'integration',  routeName: 'sys-setting-integration',  icon: 'mingcute:plug-2-line',   label: 'integration' },
     { id: 'sub-workers',  routeName: 'sys-setting-sub-workers',  icon: 'mingcute:server-line',   label: 'subWorkerManage' },
     { id: 'appearance',   routeName: 'sys-setting-appearance',   icon: 'mingcute:palette-line',  label: 'appearance' },
-    { id: 'api-docs',     routeName: 'sys-setting-api-docs',     icon: 'mingcute:code-line',     label: 'apiDocs' },
   ]
   if (serverStore.isStandalone) {
     list.push({ id: 'servers', routeName: 'sys-setting-servers', icon: 'mingcute:cloud-line', label: 'serverManage' })

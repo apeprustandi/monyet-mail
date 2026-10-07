@@ -2,7 +2,7 @@
 
 Base URL: `https://monyet-mail.receh34.workers.dev/api`
 
-Semua endpoint diawali `/api`. Response selalu JSON dengan format:
+Semua endpoint diawali `/api`. Response selalu JSON:
 
 ```json
 {
@@ -12,416 +12,212 @@ Semua endpoint diawali `/api`. Response selalu JSON dengan format:
 }
 ```
 
-`code: 0` = sukses. Kode lain = error (lihat pesan di `msg`).
+`code: 0` = sukses. Kode lain = error (lihat `msg`).
 
 ---
 
-## Autentikasi
+# 🔑 API Admin (x-admin-auth)
 
-Kebanyakan endpoint butuh JWT token. Dapatkan via login, lalu kirim di header:
+Endpoint di section ini **hanya** bisa diakses dengan header:
 
-```
-Authorization: Bearer <jwt_token>
-```
-
-### POST `/api/login`
-Login user.
-```json
-// Request
-{ "email": "admin@monyet.dev", "password": "password123" }
-
-// Response data
-{ "token": "eyJhbGciOi..." }
-```
-
-### POST `/api/register`
-Daftar akun baru.
-```json
-// Request
-{
-  "email": "user@monyet.dev",
-  "password": "password123",
-  "confirmPassword": "password123",
-  "token": "turnstile-token-jika-aktif"
-}
-// Response data: JWT token (langsung login)
-```
-
-### DELETE `/api/logout`
-Logout. Header: `Authorization: Bearer <token>`.
-
----
-
-## Admin API (tanpa login, pakai global token)
-
-Aktifkan dulu di **System Settings → Security → Global API Token** (generate token + enable).
-
-Header wajib:
 ```
 x-admin-auth: <global_token>
 ```
 
-### GET `/api/admin/mails`
-Query email milik alamat tertentu tanpa login. Cocok untuk script auto-cek OTP/kode verifikasi.
+**Cara dapat token:** login sebagai admin → **System Settings → Security → Global API Token** → Generate + Enable.
+
+Tidak butuh login/JWT. Cocok untuk script, bot, dan integrasi eksternal.
+
+---
+
+## GET `/api/admin/mails`
+
+Ambil daftar email milik satu alamat. Cocok untuk script auto-cek OTP/kode verifikasi.
 
 | Param | Wajib | Default | Keterangan |
 |-------|-------|---------|------------|
 | address | Ya | - | Alamat email yang dicek |
-| limit | Tidak | 20 | Max 100 |
+| limit | Tidak | 20 | Maksimal 100 |
 | offset | Tidak | 0 | Untuk pagination |
 
 ```bash
-curl -H "x-admin-auth: TOKEN" \
-  "https://monyet-mail.receh34.workers.dev/api/admin/mails?address=user@monyet.dev&limit=10"
+curl -X GET https://monyet-mail.receh34.workers.dev/api/admin/mails?address=user@monyet.dev&limit=10 \
+  -H "x-admin-auth: token_rahasia_kamu"
 ```
 
-Response `data`:
+Contoh response `data`:
 ```json
 {
   "results": [
     {
       "emailId": 123,
-      "messageId": "<...>",
+      "messageId": "<abc@mail.com>",
       "sendEmail": "noreply@layanan.com",
       "name": "Layanan",
       "toEmail": "user@monyet.dev",
       "subject": "Kode verifikasi: 482913",
       "text": "Kode Anda adalah 482913",
-      "content": "<html>...",
+      "content": "<p>Kode Anda adalah 482913</p>",
       "createTime": "2026-10-07 12:00:00",
-      "unread": 1,
+      "unread": 0,
       "type": 0
     }
   ],
   "count": 42
 }
-```
-
-
-
-### GET `/api/admin/accounts`
-List alamat mailbox. Filter opsional by user.
-| Param | Default | Keterangan |
-|-------|---------|------------|
-| userEmail | - | Filter milik user tertentu |
-| limit | 50 (max 200) | |
-| offset | 0 | |
-
-### POST `/api/admin/accounts`
-Bikin alamat email baru untuk user tertentu (bypass limit kayak dashboard admin).
-```json
-{
-  "email": "baru@monyet.dev",
-  "userEmail": "user@monyet.dev"
-}
-// atau pakai userId: { "email": "baru@monyet.dev", "userId": 1 }
-```
-
-### DELETE `/api/admin/accounts`
-Hapus alamat mailbox.
-```json
-// By email
-{ "email": "hapus@monyet.dev" }
-// By ID
-{ "accountId": 1 }
-```
-
-### POST `/api/admin/mails`
-Inject/bikin email manual ke inbox alamat tertentu (buat testing/notifikasi).
-```json
-// Request
-{
-  "toEmail": "user@monyet.dev",
-  "sendEmail": "system@monyet.dev",
-  "name": "System",
-  "subject": "Halo",
-  "text": "Isi pesan",
-  "content": "<p>Isi HTML</p>"
-}
-// Response data: { "emailId": 123 }
-```
-
-### DELETE `/api/admin/mails`
-Hapus email by ID atau by alamat.
-```json
-// By ID
-{ "emailIds": "1,2,3" }
-// By address (hapus semua milik alamat tsb)
-{ "address": "user@monyet.dev" }
-```
-
-### PUT `/api/admin/mails/read`
-Tandai dibaca/belum dibaca.
-```json
-{ "emailIds": "1,2,3", "unread": 0 }
-// unread: 0 = sudah dibaca, 1 = belum dibaca
+// unread: 0 = belum dibaca, 1 = sudah dibaca
 ```
 
 ---
 
-## Public API (tanpa auth)
+## POST `/api/admin/mails`
 
-### POST `/api/public/genToken`
-Generate token akses publik untuk sebuah alamat email.
-```json
-// Request
-{ "address": "user@monyet.dev" }
-// Response data: { "token": "..." }
+Buat/inject email manual ke inbox alamat tertentu. Alamat tujuan harus sudah terdaftar di sistem.
+
+| Param | Wajib | Default | Keterangan |
+|-------|-------|---------|------------|
+| toEmail | Ya | - | Alamat penerima (harus sudah ada) |
+| subject | Tidak | "" | Judul email |
+| text | Tidak | "" | Isi plain text |
+| content | Tidak | "" | Isi HTML |
+| sendEmail | Tidak | "admin@system" | Alamat pengirim |
+| name | Tidak | "" | Nama pengirim |
+
+```bash
+curl -X POST https://monyet-mail.receh34.workers.dev/api/admin/mails \
+  -H "x-admin-auth: token_rahasia_kamu" \
+  -H "Content-Type: application/json" \
+  -d '{"toEmail":"user@monyet.dev","subject":"Halo","text":"Isi pesan"}'
 ```
 
-### POST `/api/public/emailList`
-List email via public token.
+Contoh response:
 ```json
-// Request
-{ "token": "...", "limit": 20, "offset": 0 }
+{ "code": 0, "msg": "success", "data": { "emailId": 124 } }
 ```
-
-### POST `/api/public/addUser`
-Tambah user via API publik (jika diaktifkan admin).
 
 ---
 
-## Email (butuh login)
+## DELETE `/api/admin/mails`
 
-### GET `/api/email/list`
-List email di inbox.
+Hapus email. Bisa by ID (beberapa sekaligus) atau hapus semua milik satu alamat.
 
-| Param | Keterangan |
-|-------|------------|
-| accountId | Filter per akun mailbox |
-| keyword | Cari di subject/pengirim |
-| unread | `1` = hanya belum dibaca |
-| limit / offset | Pagination |
-
-### GET `/api/email/latest`
-Email terbaru (untuk polling/notifikasi).
-
-### GET `/api/email/content`
-Isi lengkap satu email.
 | Param | Wajib | Keterangan |
 |-------|-------|------------|
-| emailId | Ya | ID email |
+| emailIds | Salah satu | ID pisah koma. Contoh: `"1,2,3"` |
+| address | Salah satu | Hapus SEMUA email milik alamat ini |
 
-### GET `/api/email/attList`
-Daftar attachment.
-| Param | Wajib |
-|-------|-------|
-| emailId | Ya |
+```bash
+# Hapus by ID
+curl -X DELETE https://monyet-mail.receh34.workers.dev/api/admin/mails \
+  -H "x-admin-auth: token_rahasia_kamu" \
+  -H "Content-Type: application/json" \
+  -d '{"emailIds":"1,2,3"}'
 
-### POST `/api/email/send`
-Kirim email.
+# Hapus semua milik satu alamat
+curl -X DELETE https://monyet-mail.receh34.workers.dev/api/admin/mails \
+  -H "x-admin-auth: token_rahasia_kamu" \
+  -H "Content-Type: application/json" \
+  -d '{"address":"user@monyet.dev"}'
+```
+
+---
+
+## PUT `/api/admin/mails/read`
+
+Tandai email sudah dibaca atau belum dibaca.
+
+| Param | Wajib | Default | Keterangan |
+|-------|-------|---------|------------|
+| emailIds | Ya | - | ID pisah koma. Contoh: `"1,2,3"` |
+| unread | Tidak | 0 | 0 = sudah dibaca, 1 = belum dibaca |
+
+```bash
+curl -X PUT https://monyet-mail.receh34.workers.dev/api/admin/mails/read \
+  -H "x-admin-auth: token_rahasia_kamu" \
+  -H "Content-Type: application/json" \
+  -d '{"emailIds":"1,2,3","unread":0}'
+```
+
+---
+
+## GET `/api/admin/accounts`
+
+Lihat daftar alamat mailbox. Bisa filter milik user tertentu.
+
+| Param | Wajib | Default | Keterangan |
+|-------|-------|---------|------------|
+| userEmail | Tidak | - | Filter hanya milik user ini |
+| limit | Tidak | 50 | Maksimal 200 |
+| offset | Tidak | 0 | Untuk pagination |
+
+```bash
+curl -X GET https://monyet-mail.receh34.workers.dev/api/admin/accounts?userEmail=user@monyet.dev \
+  -H "x-admin-auth: token_rahasia_kamu"
+```
+
+Contoh response:
 ```json
 {
-  "accountId": 1,
-  "name": "Nama Pengirim",
-  "receiveEmail": "tujuan@contoh.com",
-  "subject": "Halo",
-  "text": "Isi plain text",
-  "content": "<p>Isi HTML</p>",
-  "attachments": []
+  "code": 0, "msg": "success",
+  "data": [
+    {
+      "accountId": 5,
+      "email": "belanja@monyet.dev",
+      "name": "belanja",
+      "userId": 2,
+      "createTime": "2026-10-07 10:00:00"
+    }
+  ]
 }
 ```
 
-### PUT `/api/email/read`
-Tandai email dibaca.
-```json
-{ "emailIds": [1, 2, 3] }
+---
+
+## POST `/api/admin/accounts`
+
+Buat alamat email baru untuk user tertentu. Bypass limit jumlah alamat (seperti dashboard admin). Domain harus terdaftar di sistem.
+
+| Param | Wajib | Keterangan |
+|-------|-------|------------|
+| email | Ya | Alamat baru, mis. `baru@monyet.dev` |
+| userEmail | Salah satu | Email user pemilik |
+| userId | Salah satu | ID user (alternatif userEmail) |
+
+```bash
+curl -X POST https://monyet-mail.receh34.workers.dev/api/admin/accounts \
+  -H "x-admin-auth: token_rahasia_kamu" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"baru@monyet.dev","userEmail":"user@monyet.dev"}'
 ```
 
-### DELETE `/api/email/delete`
-Hapus email.
+Contoh response:
 ```json
-{ "emailIds": [1, 2] }
+{ "code": 0, "msg": "success", "data": { "email": "baru@monyet.dev", "accountId": 6 } }
+// Jika alamat pernah dihapus (restore):
+// { "code": 0, "data": { "restored": "baru@monyet.dev" } }
 ```
 
 ---
 
-## Akun Mailbox (butuh login)
+## DELETE `/api/admin/accounts`
 
-### GET `/api/account/list`
-List semua alamat mailbox milik user.
+Hapus alamat mailbox (soft delete — bisa di-restore dengan POST lagi).
 
-### POST `/api/account/add`
-Buat alamat email baru.
-```json
-{ "prefix": "namauser", "domain": "monyet.dev" }
-// → namauser@monyet.dev
-```
+| Param | Wajib | Keterangan |
+|-------|-------|------------|
+| email | Salah satu | Alamat yang dihapus |
+| accountId | Salah satu | ID akun (alternatif email) |
 
-### DELETE `/api/account/delete`
-```json
-{ "accountId": 1 }
-```
-
-### PUT `/api/account/setName`
-Ganti nama tampilan akun.
-```json
-{ "accountId": 1, "name": "Nama Baru" }
-```
-
-### PUT `/api/account/setAsTop` / `/api/account/cancelTop`
-Pin/unpin akun ke atas.
-```json
-{ "accountId": 1 }
-```
-
-### PUT `/api/account/setAllReceive`
-Set semua akun menerima email.
-```json
-{ "receive": 1 }
+```bash
+curl -X DELETE https://monyet-mail.receh34.workers.dev/api/admin/accounts \
+  -H "x-admin-auth: token_rahasia_kamu" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"hapus@monyet.dev"}'
 ```
 
 ---
 
-## User & Role (admin)
-
-### GET `/api/user/list`
-List user (pagination via `limit`/`offset`).
-
-### POST `/api/user/add`
-Tambah user manual.
-```json
-{ "email": "baru@monyet.dev", "password": "...", "roleId": 2 }
-```
-
-### PUT `/api/user/batchSetStatus`
-Aktif/nonaktif/ban user sekaligus.
-```json
-{ "userIds": [1, 2], "status": 1 }
-```
-
-### PUT `/api/user/batchRestore`
-Restore user yang dihapus.
-```json
-{ "userIds": [1] }
-```
-
-### DELETE `/api/user/delete`, `DELETE /api/user/deleteAccount`
-Hapus user / hapus akun mailbox milik user.
-
-### GET `/api/role/list`, POST `/api/role/add`, PUT `/api/role/set`
-Kelola role & permission.
-
-### GET `/api/role/permTree`, GET `/api/role/selectUse`
-Struktur permission & role yang tersedia.
-
----
-
-## Kode Registrasi (admin)
-
-### POST `/api/regKey/add`
-Buat kode undangan registrasi.
-```json
-{ "count": 10, "roleId": 2 }
-```
-
-### GET `/api/regKey/list`, GET `/api/regKey/history`
-List & riwayat kode.
-
-### DELETE `/api/regKey/delete`, DELETE `/api/regKey/clearNotUse`
-Hapus kode.
-
----
-
-## Pengaturan (admin)
-
-### GET `/api/setting/query`
-Ambil semua pengaturan sistem.
-
-### PUT `/api/setting/set`
-Ubah pengaturan.
-```json
-{ "title": "Monyet Mail", "register": 0 }
-```
-
-### GET `/api/setting/websiteConfig`
-Config publik untuk frontend (tanpa auth).
-
-### POST `/api/setting/globalToken/generate`
-Generate global API token baru.
-
-### PUT `/api/setting/globalToken/enabled`
-Aktif/nonaktif global token.
-```json
-{ "enabled": true }
-```
-
-### GET `/api/setting/globalToken`
-Lihat token saat ini (admin only).
-
----
-
-## Favorit
-
-### GET `/api/star/list`
-List email berbintang.
-
-### POST `/api/star/add`
-```json
-{ "emailId": 123 }
-```
-
-### DELETE `/api/star/cancel`
-```json
-{ "emailId": 123 }
-```
-
----
-
-## Transfer Email antar User
-
-### POST `/api/transfer/create`
-Kirim email + akun ke user lain.
-```json
-{ "toUserId": "abc123", "accountIds": [1, 2] }
-```
-
-### PUT `/api/transfer/accept` / `/api/transfer/reject`
-Terima/tolak transfer masuk.
-```json
-{ "transferId": 5 }
-```
-
-### GET `/api/transfer/pending`, `/api/transfer/sent`, `/api/transfer/received-history`
-List transfer.
-
----
-
-## Sub-Worker
-
-Worker ringan tambahan (hanya terima email + API).
-
-- `GET /api/sub-worker/list`
-- `POST /api/sub-worker/add` — `{ "name": "...", "workerUrl": "...", "apiToken": "..." }`
-- `PUT /api/sub-worker/:id` — edit
-- `PUT /api/sub-worker/:id/status` — aktif/nonaktif
-- `DELETE /api/sub-worker/:id`
-- `GET /api/sub-worker/:id/mails` — agregat email
-- `GET /api/sub-worker/:id/mail/:mailId` — detail email
-- `POST /api/sub-worker/test` — tes koneksi
-
----
-
-## Lainnya
-
-| Endpoint | Keterangan |
-|----------|------------|
-| `GET /api/my/loginUserInfo` | Info user yang login |
-| `PUT /api/my/lang` | Ganti bahasa (`{"lang": "en"}` / `"zh"`) |
-| `PUT /api/my/resetPassword` | Ganti password sendiri |
-| `GET /api/analysis/echarts` | Data statistik dashboard |
-| `GET /api/allEmail/list` | Semua email (admin) |
-| `GET /api/allEmail/latest` | Email terbaru semua user (admin) |
-| `DELETE /api/allEmail/delete` | Hapus (admin) |
-| `GET /api/telegram/getEmail/:token` | Ambil email via bot Telegram |
-| `POST /api/webhooks` | Webhook receiver |
-| `POST /api/oauth/linuxDo/login` | Login via LinuxDo OAuth |
-| `PUT /api/oauth/bindUser` | Bind akun OAuth |
-| `GET /api/init/:secret` | Inisialisasi/migrasi database |
-
----
-
-## Contoh: Cek OTP via Script
+## Contoh Script: Cek OTP Otomatis
 
 ```bash
 #!/bin/bash
@@ -433,10 +229,204 @@ curl -s -H "x-admin-auth: $TOKEN" \
   | python3 -c "
 import json,sys,re
 d = json.load(sys.stdin)
-for m in d['data']['results']:
+for m in d['results']:
     kode = re.search(r'\b\d{4,8}\b', m['subject'] + ' ' + (m['text'] or ''))
     if kode:
         print(m['sendEmail'], '→', kode.group())
         break
 "
 ```
+
+---
+
+---
+
+# 👤 API User (butuh login)
+
+Endpoint di section ini butuh JWT token. Dapatkan via login:
+
+```bash
+curl -X POST https://monyet-mail.receh34.workers.dev/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@monyet.dev","password":"xxx"}'
+# → { "code": 0, "data": { "token": "eyJhbGciOi..." } }
+```
+
+Lalu kirim di setiap request:
+```
+Authorization: Bearer <jwt_token>
+```
+
+---
+
+## Autentikasi
+
+### POST `/api/login`
+```json
+// Request
+{ "email": "admin@monyet.dev", "password": "password123" }
+// Response data: { "token": "eyJhbGciOi..." }
+```
+
+### POST `/api/register`
+```json
+// Request
+{ "email": "user@monyet.dev", "password": "password123", "confirmPassword": "password123" }
+// Response: JWT token (langsung login)
+```
+
+### DELETE `/api/logout`
+Logout (butuh JWT).
+
+---
+
+## Email
+
+### GET `/api/email/list`
+| Param | Keterangan |
+|-------|------------|
+| accountId | Filter per akun mailbox |
+| keyword | Cari di subject/pengirim |
+| unread | `1` = hanya belum dibaca |
+| limit / offset | Pagination |
+
+### GET `/api/email/latest`
+Email terbaru (untuk polling/notifikasi).
+
+### GET `/api/email/content?emailId=123`
+Isi lengkap satu email.
+
+### GET `/api/email/attList?emailId=123`
+Daftar attachment.
+
+### POST `/api/email/send`
+```json
+{
+  "accountId": 1,
+  "receiveEmail": "tujuan@contoh.com",
+  "subject": "Halo",
+  "text": "Isi plain text",
+  "content": "<p>Isi HTML</p>"
+}
+```
+
+### PUT `/api/email/read`
+```json
+{ "emailIds": [1, 2, 3] }
+```
+
+### DELETE `/api/email/delete`
+```json
+{ "emailIds": [1, 2] }
+```
+
+---
+
+## Akun Mailbox
+
+### GET `/api/account/list`
+List semua alamat milik user.
+
+### POST `/api/account/add`
+```json
+{ "prefix": "namauser", "domain": "monyet.dev" }
+// → namauser@monyet.dev
+```
+
+### DELETE `/api/account/delete`
+```json
+{ "accountId": 1 }
+```
+
+### PUT `/api/account/setName`
+```json
+{ "accountId": 1, "name": "Nama Baru" }
+```
+
+### PUT `/api/account/setAsTop` / `/api/account/cancelTop`
+```json
+{ "accountId": 1 }
+```
+
+### PUT `/api/account/setAllReceive`
+```json
+{ "receive": 1 }
+```
+
+---
+
+## Favorit
+
+- `GET /api/star/list`
+- `POST /api/star/add` — `{ "emailId": 123 }`
+- `DELETE /api/star/cancel` — `{ "emailId": 123 }`
+
+---
+
+## Transfer
+
+- `POST /api/transfer/create` — `{ "toUserId": "abc", "accountIds": [1, 2] }`
+- `PUT /api/transfer/accept` / `/api/transfer/reject` — `{ "transferId": 5 }`
+- `GET /api/transfer/pending`, `/api/transfer/sent`, `/api/transfer/received-history`
+
+---
+
+## Akun Saya
+
+- `GET /api/my/loginUserInfo`
+- `PUT /api/my/lang` — `{ "lang": "en" }`
+- `PUT /api/my/resetPassword`
+
+---
+
+---
+
+# 🌐 Public API (tanpa auth)
+
+### POST `/api/public/genToken`
+```json
+// Request
+{ "address": "user@monyet.dev" }
+// Response data: { "token": "..." }
+```
+
+### POST `/api/public/emailList`
+```json
+// Request
+{ "token": "...", "limit": 20, "offset": 0 }
+```
+
+### POST `/api/public/addUser`
+Tambah user via API publik (jika diaktifkan admin).
+
+---
+
+---
+
+# ⚙️ API Admin Panel (butuh login admin)
+
+### User & Role
+- `GET /api/user/list`
+- `POST /api/user/add` — `{ "email": "...", "password": "...", "roleId": 2 }`
+- `PUT /api/user/batchSetStatus` — `{ "userIds": [1,2], "status": 1 }`
+- `DELETE /api/user/delete`
+
+### Pengaturan
+- `GET /api/setting/query`
+- `PUT /api/setting/set` — `{ "title": "Monyet Mail" }`
+- `GET /api/setting/websiteConfig` (tanpa auth)
+- `POST /api/setting/globalToken/generate`
+- `PUT /api/setting/globalToken/enabled` — `{ "enabled": true }`
+
+### Kode Registrasi
+- `POST /api/regKey/add` — `{ "count": 10, "roleId": 2 }`
+- `GET /api/regKey/list`
+
+### Lainnya
+- `GET /api/analysis/echarts` — statistik dashboard
+- `GET /api/allEmail/list` — semua email (admin)
+- `GET /api/sub-worker/list`
+- `POST /api/sub-worker/add` — `{ "name": "...", "workerUrl": "...", "apiToken": "..." }`
+- `GET /api/telegram/getEmail/:token`
+- `POST /api/webhooks`
+- `GET /api/init/:secret` — inisialisasi DB
