@@ -3,7 +3,7 @@
     <h2 class="ad-title">Dokumentasi API Admin</h2>
     <p class="ad-desc">
       Semua endpoint butuh header <code>x-admin-auth: &lt;Global API Token&gt;</code>.<br>
-      Token diatur di <b>System Settings → Integration → Global API Token</b> (generate + enable).<br>
+      Token diatur di <b>System Settings → Security → Global API Token</b> (generate + enable).<br>
       Base URL: <code>{{ base }}/api</code> — Response: <code>{ "code": 0, "msg": "success", "data": {...} }</code>
     </p>
 

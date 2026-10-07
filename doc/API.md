@@ -1,6 +1,6 @@
 # Dokumentasi API Monyet Mail
 
-Base URL: `https://monyet.dev/api`
+Base URL: `https://monyet-mail.receh34.workers.dev/api`
 
 Semua endpoint diawali `/api`. Response selalu JSON dengan format:
 
@@ -54,7 +54,7 @@ Logout. Header: `Authorization: Bearer <token>`.
 
 ## Admin API (tanpa login, pakai global token)
 
-Aktifkan dulu di **System Settings → Integration → Global API Token** (generate token + enable).
+Aktifkan dulu di **System Settings → Security → Global API Token** (generate token + enable).
 
 Header wajib:
 ```
