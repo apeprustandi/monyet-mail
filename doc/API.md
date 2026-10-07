@@ -1,6 +1,6 @@
 # Dokumentasi API Monyet Mail
 
-Base URL: `https://monyet-mail.receh34.workers.dev/api`
+Base URL: `https://monyet.dev/api`
 
 Semua endpoint diawali `/api`. Response selalu JSON dengan format:
 
