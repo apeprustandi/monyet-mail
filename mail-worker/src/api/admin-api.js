@@ -7,6 +7,8 @@ import BizError from '../error/biz-error';
 import { and, eq, desc, count, inArray } from 'drizzle-orm';
 import { isDel, emailConst } from '../const/entity-const';
 import accountService from '../service/account-service';
+import settingService from '../service/setting-service';
+import account from '../entity/account';
 import userService from '../service/user-service';
 
 /** Verify x-admin-auth header against stored global token */
@@ -233,4 +235,109 @@ app.delete('/admin/users', async (c) => {
 	}
 
 	throw new BizError('email atau userIds wajib diisi', 400);
+});
+
+/**
+ * GET /admin/accounts
+ * List mailbox addresses (admin only). Filter by user email optional.
+ * Header: x-admin-auth: <token>
+ * Query: userEmail (optional), limit (default 50, max 200), offset (default 0)
+ */
+app.get('/admin/accounts', async (c) => {
+	await verifyAdminToken(c);
+
+	let { userEmail = '', limit = '50', offset = '0' } = c.req.query();
+	limit  = Math.min(Number(limit)  || 50, 200);
+	offset = Math.max(Number(offset) || 0,  0);
+
+	const db = orm(c);
+	let query = db.select({
+		accountId: account.accountId,
+		email: account.email,
+		name: account.name,
+		userId: account.userId,
+		createTime: account.createTime,
+	}).from(account).where(eq(account.isDel, isDel.NORMAL));
+
+	if (userEmail) {
+		const userRow = await userService.selectByEmail(c, userEmail);
+		if (!userRow) throw new BizError('User not found: ' + userEmail, 404);
+		query = query.where(eq(account.userId, userRow.userId));
+	}
+
+	const rows = await query.orderBy(desc(account.accountId)).limit(limit).offset(offset).all();
+	return c.json(result.ok(rows));
+});
+
+/**
+ * POST /admin/accounts
+ * Create a new mailbox address for a user (admin only, bypasses limits).
+ * Header: x-admin-auth: <token>
+ * Body: { email: "baru@monyet.dev" (required), userEmail: "user@monyet.dev" (required) }
+ */
+app.post('/admin/accounts', async (c) => {
+	await verifyAdminToken(c);
+	const { email, userEmail, userId } = await c.req.json();
+
+	if (!email) throw new BizError('email wajib diisi', 400);
+	if (!userEmail && !userId) throw new BizError('userEmail atau userId wajib diisi', 400);
+
+	// Resolve target user
+	let targetUserId = userId;
+	if (!targetUserId) {
+		const userRow = await userService.selectByEmail(c, userEmail);
+		if (!userRow) throw new BizError('User not found: ' + userEmail, 404);
+		targetUserId = userRow.userId;
+	}
+
+	// Validate domain
+	const setting = await settingService.query(c);
+	const { domainList } = setting;
+	const emailDomain = email.split('@')[1] || '';
+	if (!domainList.includes('@' + emailDomain)) {
+		throw new BizError('Domain tidak terdaftar: ' + emailDomain, 400);
+	}
+
+	// Check duplicate
+	const existing = await accountService.selectByEmailIncludeDel(c, email);
+	if (existing && existing.isDel === isDel.DELETE) {
+		// Restore soft-deleted
+		const db = orm(c);
+		await db.update(account)
+			.set({ isDel: isDel.NORMAL, userId: targetUserId })
+			.where(eq(account.email, email)).run();
+		return c.json(result.ok({ restored: email }));
+	}
+	if (existing) throw new BizError('Alamat sudah dipakai: ' + email, 400);
+
+	// Create
+	await accountService.insert(c, {
+		userId: targetUserId,
+		email,
+		name: email.split('@')[0],
+	});
+	const created = await accountService.selectByEmailIncludeDel(c, email);
+	return c.json(result.ok({ email, accountId: created?.accountId }));
+});
+
+/**
+ * DELETE /admin/accounts
+ * Delete a mailbox address (admin only).
+ * Header: x-admin-auth: <token>
+ * Body: { email: "hapus@monyet.dev" } OR { accountId: 1 }
+ */
+app.delete('/admin/accounts', async (c) => {
+	await verifyAdminToken(c);
+	const { email: delEmail, accountId } = await c.req.json();
+	const db = orm(c);
+
+	if (delEmail) {
+		await db.update(account).set({ isDel: isDel.DELETE }).where(eq(account.email, delEmail)).run();
+		return c.json(result.ok({ deleted: delEmail }));
+	}
+	if (accountId) {
+		await db.update(account).set({ isDel: isDel.DELETE }).where(eq(account.accountId, Number(accountId))).run();
+		return c.json(result.ok({ deletedAccountId: accountId }));
+	}
+	throw new BizError('email atau accountId wajib diisi', 400);
 });

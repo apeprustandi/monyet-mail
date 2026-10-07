@@ -98,6 +98,34 @@ Response `data`:
 ```
 
 
+
+### GET `/api/admin/accounts`
+List alamat mailbox. Filter opsional by user.
+| Param | Default | Keterangan |
+|-------|---------|------------|
+| userEmail | - | Filter milik user tertentu |
+| limit | 50 (max 200) | |
+| offset | 0 | |
+
+### POST `/api/admin/accounts`
+Bikin alamat email baru untuk user tertentu (bypass limit kayak dashboard admin).
+```json
+{
+  "email": "baru@monyet.dev",
+  "userEmail": "user@monyet.dev"
+}
+// atau pakai userId: { "email": "baru@monyet.dev", "userId": 1 }
+```
+
+### DELETE `/api/admin/accounts`
+Hapus alamat mailbox.
+```json
+// By email
+{ "email": "hapus@monyet.dev" }
+// By ID
+{ "accountId": 1 }
+```
+
 ### POST `/api/admin/mails`
 Inject/bikin email manual ke inbox alamat tertentu (buat testing/notifikasi).
 ```json
