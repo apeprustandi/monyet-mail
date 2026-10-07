@@ -126,7 +126,6 @@ import { ElMessage } from "element-plus";
 import { ref } from "vue";
 
 const base = computed(() => window.location.origin);
-const H = `-H "x-admin-auth: YOUR_TOKEN"`;
 const apiToken = ref(localStorage.getItem("monyet_admin_token") || "");
 
 function saveToken() {
@@ -193,14 +192,19 @@ async function executeEp(ep) {
 function curl(method, path, body, query) {
   let url = `${base.value}/api${path}`;
   if (query) url += query;
-  let cmd = `curl -X ${method} \\\n  ${H}`;
-  if (body) cmd += ` \\\n  -H "Content-Type: application/json" \\\n  -d '${body}'`;
-  cmd += ` \\\n  "${url}"`;
+  const NL = "\n";
+  const BS = "\\";
+  let cmd = `curl -X ${method} ${url} ${BS}${NL}`;
+  cmd += `  -H "x-admin-auth: token_rahasia_kamu"`;
+  if (body) {
+    cmd += ` ${BS}${NL}  -H "Content-Type: application/json" ${BS}${NL}`;
+    cmd += `  -d '${body}'`;
+  }
   return cmd;
 }
 
 function copyCurl(ep) {
-  navigator.clipboard.writeText(ep.curl).then(() => ElMessage.success("cURL tersalin! Ganti YOUR_TOKEN."));
+  navigator.clipboard.writeText(ep.curl).then(() => ElMessage.success("cURL tersalin! Ganti token_rahasia_kamu dengan token kamu."));
 }
 function copyText(t) {
   navigator.clipboard.writeText(t).then(() => ElMessage.success("Tersalin!"));
