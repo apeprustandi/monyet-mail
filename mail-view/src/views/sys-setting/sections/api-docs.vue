@@ -76,10 +76,10 @@
           @click="toggleTry(ep)"
         >
           <Icon icon="mingcute:zap-line" width="13" height="13" />
-          <span style="margin-left:4px">{{ ep._showTry ? 'Tutup' : 'Try it out' }}</span>
+          <span style="margin-left:4px">{{ getTryState(ep).show ? 'Tutup' : 'Try it out' }}</span>
         </el-button>
 
-        <div v-if="ep._showTry" class="ad-try-panel">
+        <div v-if="getTryState(ep).show" class="ad-try-panel">
           <div v-if="!apiToken" class="ad-try-warn">
             <el-alert type="warning" title="Isi Global API Token di atas dulu" :closable="false" />
           </div>
@@ -90,21 +90,21 @@
               :required="p.required"
             >
               <el-input
-                v-model="ep._values[p.name]"
+                v-model="getTryState(ep).values[p.name]"
                 :placeholder="(p.default && p.default !== '-') ? 'default: ' + p.default : p.desc"
                 clearable
               />
             </el-form-item>
           </el-form>
           <div class="ad-try-actions">
-            <el-button type="primary" size="small" :loading="ep._loading" @click="executeEp(ep)" :disabled="!apiToken">
+            <el-button type="primary" size="small" :loading="getTryState(ep).loading" @click="executeEp(ep)" :disabled="!apiToken">
               Kirim Request
             </el-button>
-            <el-tag v-if="ep._status" :type="ep._status < 300 ? 'success' : 'danger'" size="small">
-              HTTP {{ ep._status }} · {{ ep._time }}ms
+            <el-tag v-if="getTryState(ep).status" :type="getTryState(ep).status < 300 ? 'success' : 'danger'" size="small">
+              HTTP {{ getTryState(ep).status }} · {{ getTryState(ep).time }}ms
             </el-tag>
           </div>
-          <pre v-if="ep._response" class="ad-code ad-response">{{ ep._response }}</pre>
+          <pre v-if="getTryState(ep).response" class="ad-code ad-response">{{ getTryState(ep).response }}</pre>
         </div>
       </div>
       </el-collapse-item>
@@ -146,14 +146,24 @@ function saveToken() {
   ElMessage.success("Token tersimpan di browser ini.");
 }
 
-function toggleTry(ep) {
-  ep._showTry = !ep._showTry;
-  if (ep._showTry && !ep._values) {
-    ep._values = {};
+// Reactive state per endpoint (keyed by method+path)
+const tryState = ref({});
+
+function getTryState(ep) {
+  const key = ep.method + ep.path;
+  if (!tryState.value[key]) {
+    const values = {};
     (ep.params || []).forEach(p => {
-      ep._values[p.name] = (p.default && p.default !== "-" && p.default !== '""') ? p.default : "";
+      values[p.name] = (p.default && p.default !== "-" && p.default !== '""') ? p.default : "";
     });
+    tryState.value[key] = { show: false, values, loading: false, response: "", status: 0, time: 0 };
   }
+  return tryState.value[key];
+}
+
+function toggleTry(ep) {
+  const s = getTryState(ep);
+  s.show = !s.show;
 }
 
 async function executeEp(ep) {
@@ -161,9 +171,10 @@ async function executeEp(ep) {
     ElMessage.warning("Isi Global API Token dulu.");
     return;
   }
-  ep._loading = true;
-  ep._response = "";
-  ep._status = 0;
+  const s = getTryState(ep);
+  s.loading = true;
+  s.response = "";
+  s.status = 0;
   const t0 = Date.now();
   try {
     let url = `${base.value}/api${ep.path}`;
@@ -171,7 +182,7 @@ async function executeEp(ep) {
       method: ep.method,
       headers: { "x-admin-auth": apiToken.value },
     };
-    const vals = ep._values || {};
+    const vals = getTryState(ep).values || {};
     if (ep.method === "GET") {
       const qs = new URLSearchParams();
       Object.keys(vals).forEach(k => { if (vals[k] !== "") qs.append(k, vals[k]); });
@@ -189,16 +200,16 @@ async function executeEp(ep) {
       opts.body = JSON.stringify(body);
     }
     const res = await fetch(url, opts);
-    ep._status = res.status;
+    s.status = res.status;
     const text = await res.text();
     try {
-      ep._response = JSON.stringify(JSON.parse(text), null, 2);
-    } catch { ep._response = text; }
+      s.response = JSON.stringify(JSON.parse(text), null, 2);
+    } catch { s.response = text; }
   } catch (e) {
-    ep._response = "Error: " + e.message;
+    s.response = "Error: " + e.message;
   } finally {
-    ep._time = Date.now() - t0;
-    ep._loading = false;
+    s.time = Date.now() - t0;
+    s.loading = false;
   }
 }
 
