@@ -7,6 +7,18 @@
       Base URL: <code>{{ base }}/api</code> — Response: <code>{ "code": 0, "msg": "success", "data": {...} }</code>
     </p>
 
+    <div class="ad-token-bar">
+      <span class="ad-token-label">Global API Token:</span>
+      <el-input
+        v-model="apiToken"
+        placeholder="Paste Global API Token di sini untuk Try it out"
+        show-password
+        clearable
+        class="ad-token-input"
+      />
+      <el-button type="success" size="small" @click="saveToken" :disabled="!apiToken">Simpan</el-button>
+    </div>
+
     <div v-for="ep in endpoints" :key="ep.method + ep.path" class="ad-endpoint">
       <div class="ad-head">
         <span class="ad-method" :class="ep.method.toLowerCase()">{{ ep.method }}</span>
@@ -49,6 +61,45 @@
         </div>
         <pre class="ad-code ad-curl">{{ ep.curl }}</pre>
       </div>
+
+      <!-- Try it out -->
+      <div class="ad-block ad-try">
+        <el-button
+          size="small" type="warning" plain
+          @click="toggleTry(ep)"
+        >
+          <Icon icon="mingcute:zap-line" width="13" height="13" />
+          <span style="margin-left:4px">{{ ep._showTry ? 'Tutup' : 'Try it out' }}</span>
+        </el-button>
+
+        <div v-if="ep._showTry" class="ad-try-panel">
+          <div v-if="!apiToken" class="ad-try-warn">
+            <el-alert type="warning" title="Isi Global API Token di atas dulu" :closable="false" />
+          </div>
+          <el-form label-width="130px" size="small" class="ad-try-form">
+            <el-form-item
+              v-for="p in ep.params" :key="p.name"
+              :label="p.name"
+              :required="p.required"
+            >
+              <el-input
+                v-model="ep._values[p.name]"
+                :placeholder="(p.default && p.default !== '-') ? 'default: ' + p.default : p.desc"
+                clearable
+              />
+            </el-form-item>
+          </el-form>
+          <div class="ad-try-actions">
+            <el-button type="primary" size="small" :loading="ep._loading" @click="executeEp(ep)" :disabled="!apiToken">
+              Kirim Request
+            </el-button>
+            <el-tag v-if="ep._status" :type="ep._status < 300 ? 'success' : 'danger'" size="small">
+              HTTP {{ ep._status }} · {{ ep._time }}ms
+            </el-tag>
+          </div>
+          <pre v-if="ep._response" class="ad-code ad-response">{{ ep._response }}</pre>
+        </div>
+      </div>
     </div>
 
     <div class="ad-endpoint">
@@ -72,8 +123,72 @@ import { computed } from "vue";
 import { Icon } from "@iconify/vue";
 import { ElMessage } from "element-plus";
 
+import { ref } from "vue";
+
 const base = computed(() => window.location.origin);
 const H = `-H "x-admin-auth: YOUR_TOKEN"`;
+const apiToken = ref(localStorage.getItem("monyet_admin_token") || "");
+
+function saveToken() {
+  localStorage.setItem("monyet_admin_token", apiToken.value);
+  ElMessage.success("Token tersimpan di browser ini.");
+}
+
+function toggleTry(ep) {
+  ep._showTry = !ep._showTry;
+  if (ep._showTry && !ep._values) {
+    ep._values = {};
+    (ep.params || []).forEach(p => {
+      ep._values[p.name] = (p.default && p.default !== "-" && p.default !== '""') ? p.default : "";
+    });
+  }
+}
+
+async function executeEp(ep) {
+  if (!apiToken.value) {
+    ElMessage.warning("Isi Global API Token dulu.");
+    return;
+  }
+  ep._loading = true;
+  ep._response = "";
+  ep._status = 0;
+  const t0 = Date.now();
+  try {
+    let url = `${base.value}/api${ep.path}`;
+    const opts = {
+      method: ep.method,
+      headers: { "x-admin-auth": apiToken.value },
+    };
+    const vals = ep._values || {};
+    if (ep.method === "GET") {
+      const qs = new URLSearchParams();
+      Object.keys(vals).forEach(k => { if (vals[k] !== "") qs.append(k, vals[k]); });
+      const q = qs.toString();
+      if (q) url += "?" + q;
+    } else {
+      const body = {};
+      Object.keys(vals).forEach(k => {
+        if (vals[k] === "") return;
+        // try to parse numbers
+        const param = (ep.params || []).find(p => p.name === k);
+        body[k] = (param && param.type === "number" && !isNaN(Number(vals[k]))) ? Number(vals[k]) : vals[k];
+      });
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    const res = await fetch(url, opts);
+    ep._status = res.status;
+    const text = await res.text();
+    try {
+      ep._response = JSON.stringify(JSON.parse(text), null, 2);
+    } catch { ep._response = text; }
+  } catch (e) {
+    ep._response = "Error: " + e.message;
+  } finally {
+    ep._time = Date.now() - t0;
+    ep._loading = false;
+  }
+}
 
 function curl(method, path, body, query) {
   let url = `${base.value}/api${path}`;
@@ -300,5 +415,18 @@ const endpoints = computed(() => [
     font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
   }
   .ad-curl { color: #a6e3a1; }
+  .ad-token-bar {
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid var(--el-border-color); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 20px; background: var(--el-bg-color);
+  }
+  .ad-token-label { font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .ad-token-input { flex: 1; }
+  .ad-try { border-top: 1px dashed var(--el-border-color); padding-top: 12px; }
+  .ad-try-panel { margin-top: 12px; }
+  .ad-try-warn { margin-bottom: 10px; }
+  .ad-try-form { margin-top: 4px; }
+  .ad-try-actions { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .ad-response { margin-top: 8px; max-height: 400px; overflow-y: auto; }
 }
 </style>
