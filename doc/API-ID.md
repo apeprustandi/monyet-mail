@@ -1,8 +1,8 @@
-# Monyet Mail API Documentation
+# Dokumentasi API Monyet Mail
 
 Base URL: `https://monyet.dev/api`
 
-All endpoints are prefixed with `/api`. All responses are JSON:
+Semua endpoint diawali `/api`. Response selalu JSON:
 
 ```json
 {
@@ -12,42 +12,42 @@ All endpoints are prefixed with `/api`. All responses are JSON:
 }
 ```
 
-`code: 0` = success. Other codes = error (see `msg`).
+`code: 0` = sukses. Kode lain = error (lihat `msg`).
 
-*Versi Bahasa Indonesia: [API-ID.md](./API-ID.md)*
+*English version: [API.md](./API.md)*
 
 ---
 
-# 🔑 Admin API (x-admin-auth)
+# 🔑 API Admin (x-admin-auth)
 
-Endpoints in this section are **only** accessible with the header:
+Endpoint di section ini **hanya** bisa diakses dengan header:
 
 ```
 x-admin-auth: <global_token>
 ```
 
-**How to get the token:** login as admin → **System Settings → Security → Global API Token** → Generate + Enable.
+**Cara dapat token:** login sebagai admin → **System Settings → Security → Global API Token** → Generate + Enable.
 
-No login/JWT needed. Ideal for scripts, bots, and external integrations.
+Tidak butuh login/JWT. Cocok untuk script, bot, dan integrasi eksternal.
 
 ---
 
 ## GET `/api/admin/mails`
 
-List emails of a specific address. Ideal for auto-checking OTP/verification codes.
+Ambil daftar email milik satu alamat. Cocok untuk script auto-cek OTP/kode verifikasi.
 
-| Param | Required | Default | Description |
+| Param | Wajib | Default | Keterangan |
 |-------|----------|---------|-------------|
-| address | Yes | - | Email address to check |
-| limit | No | 20 | Max 100 |
-| offset | No | 0 | For pagination |
+| address | Ya | - | Alamat email yang dicek |
+| limit | Tidak | 20 | Maksimal 100 |
+| offset | Tidak | 0 | Untuk pagination |
 
 ```bash
 curl -X GET https://monyet.dev/api/admin/mails?address=user@monyet.dev&limit=10 \
-  -H "x-admin-auth: your_secret_token"
+  -H "x-admin-auth: token_rahasia_kamu"
 ```
 
-Example response `data`:
+Contoh response `data`:
 ```json
 {
   "results": [
@@ -67,32 +67,32 @@ Example response `data`:
   ],
   "count": 42
 }
-// unread: 0 = unread, 1 = read
+// unread: 0 = belum dibaca, 1 = sudah dibaca
 ```
 
 ---
 
 ## POST `/api/admin/mails`
 
-Create/inject an email manually into an address inbox. The recipient address must already exist.
+Buat/inject email manual ke inbox alamat tertentu. Alamat tujuan harus sudah terdaftar di sistem.
 
-| Param | Required | Default | Description |
+| Param | Wajib | Default | Keterangan |
 |-------|----------|---------|-------------|
-| toEmail | Yes | - | Recipient (must exist) |
-| subject | No | "" | Email subject |
-| text | No | "" | Plain text body |
-| content | No | "" | HTML body |
-| sendEmail | No | "admin@system" | Sender address |
-| name | No | "" | Sender name |
+| toEmail | Ya | - | Alamat penerima (harus sudah ada) |
+| subject | Tidak | "" | Judul email |
+| text | Tidak | "" | Isi plain text |
+| content | Tidak | "" | Isi HTML |
+| sendEmail | Tidak | "admin@system" | Alamat pengirim |
+| name | Tidak | "" | Nama pengirim |
 
 ```bash
 curl -X POST https://monyet.dev/api/admin/mails \
-  -H "x-admin-auth: your_secret_token" \
+  -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"toEmail":"user@monyet.dev","subject":"Hello","text":"Message body"}'
 ```
 
-Example response:
+Contoh response:
 ```json
 { "code": 0, "msg": "success", "data": { "emailId": 124 } }
 ```
@@ -101,23 +101,23 @@ Example response:
 
 ## DELETE `/api/admin/mails`
 
-Delete emails by ID (multiple allowed) or delete all of one address.
+Hapus email by ID (bisa beberapa sekaligus) atau hapus semua milik satu alamat.
 
-| Param | Required | Description |
+| Param | Wajib | Keterangan |
 |-------|----------|-------------|
-| emailIds | One of | Comma-separated IDs. e.g. `"1,2,3"` |
-| address | One of | Delete ALL emails of this address |
+| emailIds | Salah satu | ID pisah koma. Contoh: `"1,2,3"` |
+| address | Salah satu | Hapus SEMUA email milik alamat ini |
 
 ```bash
-# Delete by ID
+# Hapus by ID
 curl -X DELETE https://monyet.dev/api/admin/mails \
-  -H "x-admin-auth: your_secret_token" \
+  -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"emailIds":"1,2,3"}'
 
-# Delete all of one address
+# Hapus semua milik satu alamat
 curl -X DELETE https://monyet.dev/api/admin/mails \
-  -H "x-admin-auth: your_secret_token" \
+  -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"address":"user@monyet.dev"}'
 ```
@@ -126,16 +126,16 @@ curl -X DELETE https://monyet.dev/api/admin/mails \
 
 ## PUT `/api/admin/mails/read`
 
-Mark emails as read or unread.
+Tandai email sudah dibaca atau belum dibaca.
 
-| Param | Required | Default | Description |
+| Param | Wajib | Default | Keterangan |
 |-------|----------|---------|-------------|
-| emailIds | Yes | - | Comma-separated IDs. e.g. `"1,2,3"` |
-| unread | No | 0 | 0 = read, 1 = unread |
+| emailIds | Ya | - | ID pisah koma. Contoh: `"1,2,3"` |
+| unread | Tidak | 0 | 0 = sudah dibaca, 1 = belum dibaca |
 
 ```bash
 curl -X PUT https://monyet.dev/api/admin/mails/read \
-  -H "x-admin-auth: your_secret_token" \
+  -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"emailIds":"1,2,3","unread":0}'
 ```
@@ -144,20 +144,20 @@ curl -X PUT https://monyet.dev/api/admin/mails/read \
 
 ## GET `/api/admin/accounts`
 
-List mailbox addresses. Can filter by user.
+Lihat daftar alamat mailbox. Bisa filter milik user tertentu.
 
-| Param | Required | Default | Description |
+| Param | Wajib | Default | Keterangan |
 |-------|----------|---------|-------------|
-| userEmail | No | - | Filter by this user's addresses |
-| limit | No | 50 | Max 200 |
-| offset | No | 0 | For pagination |
+| userEmail | Tidak | - | Filter hanya milik user ini |
+| limit | Tidak | 50 | Maksimal 200 |
+| offset | Tidak | 0 | Untuk pagination |
 
 ```bash
 curl -X GET https://monyet.dev/api/admin/accounts?userEmail=user@monyet.dev \
-  -H "x-admin-auth: your_secret_token"
+  -H "x-admin-auth: token_rahasia_kamu"
 ```
 
-Example response:
+Contoh response:
 ```json
 {
   "code": 0, "msg": "success",
@@ -177,25 +177,25 @@ Example response:
 
 ## POST `/api/admin/accounts`
 
-Create a new email address for a user. Bypasses address limits (like the admin dashboard). Domain must be registered.
+Buat alamat email baru untuk user tertentu. Bypass limit jumlah alamat (seperti dashboard admin). Domain harus terdaftar di sistem.
 
-| Param | Required | Description |
+| Param | Wajib | Keterangan |
 |-------|----------|-------------|
-| email | Yes | New address, e.g. `new@monyet.dev` |
-| userEmail | One of | Owner's email |
-| userId | One of | User ID (alternative to userEmail) |
+| email | Ya | Alamat baru, mis. `baru@monyet.dev` |
+| userEmail | Salah satu | Email user pemilik |
+| userId | Salah satu | ID user (alternatif userEmail) |
 
 ```bash
 curl -X POST https://monyet.dev/api/admin/accounts \
-  -H "x-admin-auth: your_secret_token" \
+  -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"email":"new@monyet.dev","userEmail":"user@monyet.dev"}'
 ```
 
-Example response:
+Contoh response:
 ```json
 { "code": 0, "msg": "success", "data": { "email": "new@monyet.dev", "accountId": 6 } }
-// If the address was previously deleted (restore):
+// Jika alamat pernah dihapus (restore):
 // { "code": 0, "data": { "restored": "new@monyet.dev" } }
 ```
 
@@ -203,27 +203,27 @@ Example response:
 
 ## DELETE `/api/admin/accounts`
 
-Delete a mailbox address (soft delete — can be restored via POST).
+Hapus alamat mailbox (soft delete — bisa di-restore dengan POST lagi).
 
-| Param | Required | Description |
+| Param | Wajib | Keterangan |
 |-------|----------|-------------|
-| email | One of | Address to delete |
-| accountId | One of | Account ID (alternative to email) |
+| email | Salah satu | Alamat yang dihapus |
+| accountId | Salah satu | ID akun (alternatif email) |
 
 ```bash
 curl -X DELETE https://monyet.dev/api/admin/accounts \
-  -H "x-admin-auth: your_secret_token" \
+  -H "x-admin-auth: token_rahasia_kamu" \
   -H "Content-Type: application/json" \
   -d '{"email":"old@monyet.dev"}'
 ```
 
 ---
 
-## Example Script: Auto-check OTP
+## Contoh Script: Cek OTP Otomatis
 
 ```bash
 #!/bin/bash
-TOKEN="your-global-token"
+TOKEN="isi-global-token"
 ADDRESS="user@monyet.dev"
 
 curl -s -H "x-admin-auth: $TOKEN" \
@@ -243,9 +243,9 @@ for m in d['results']:
 
 ---
 
-# 👤 User API (login required)
+# 👤 API User (butuh login)
 
-Endpoints in this section need a JWT token. Get it via login:
+Endpoint di section ini butuh JWT token. Dapatkan via login:
 
 ```bash
 curl -X POST https://monyet.dev/api/login \
@@ -254,14 +254,14 @@ curl -X POST https://monyet.dev/api/login \
 # → { "code": 0, "data": { "token": "eyJhbGciOi..." } }
 ```
 
-Then send on every request:
+Lalu kirim di setiap request:
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 ---
 
-## Authentication
+## Autentikasi
 
 ### POST `/api/login`
 ```json
@@ -274,11 +274,11 @@ Authorization: Bearer <jwt_token>
 ```json
 // Request
 { "email": "user@monyet.dev", "password": "password123", "confirmPassword": "password123" }
-// Response: JWT token (auto login)
+// Response: JWT token (langsung login)
 ```
 
 ### DELETE `/api/logout`
-Logout (needs JWT).
+Logout (butuh JWT).
 
 ---
 
@@ -287,19 +287,19 @@ Logout (needs JWT).
 ### GET `/api/email/list`
 | Param | Description |
 |-------|-------------|
-| accountId | Filter by mailbox |
-| keyword | Search subject/sender |
-| unread | `1` = unread only |
+| accountId | Filter per akun mailbox |
+| keyword | Cari di subject/pengirim |
+| unread | `1` = hanya belum dibaca |
 | limit / offset | Pagination |
 
 ### GET `/api/email/latest`
-Latest emails (for polling/notifications).
+Email terbaru (untuk polling/notifikasi).
 
 ### GET `/api/email/content?emailId=123`
-Full content of one email.
+Isi lengkap satu email.
 
 ### GET `/api/email/attList?emailId=123`
-Attachment list.
+Daftar attachment.
 
 ### POST `/api/email/send`
 ```json
@@ -324,10 +324,10 @@ Attachment list.
 
 ---
 
-## Mailbox Accounts
+## Akun Mailbox
 
 ### GET `/api/account/list`
-List all addresses of the logged-in user.
+List semua alamat milik user.
 
 ### POST `/api/account/add`
 ```json
@@ -357,7 +357,7 @@ List all addresses of the logged-in user.
 
 ---
 
-## Starred
+## Favorit
 
 - `GET /api/star/list`
 - `POST /api/star/add` — `{ "emailId": 123 }`
@@ -373,7 +373,7 @@ List all addresses of the logged-in user.
 
 ---
 
-## My Account
+## Akun Saya
 
 - `GET /api/my/loginUserInfo`
 - `PUT /api/my/lang` — `{ "lang": "en" }`
@@ -383,7 +383,7 @@ List all addresses of the logged-in user.
 
 ---
 
-# 🌐 Public API (no auth)
+# 🌐 Public API (tanpa auth)
 
 ### POST `/api/public/genToken`
 ```json
@@ -399,36 +399,36 @@ List all addresses of the logged-in user.
 ```
 
 ### POST `/api/public/addUser`
-Add user via public API (if enabled by admin).
+Tambah user via API publik (jika diaktifkan admin).
 
 ---
 
 ---
 
-# ⚙️ Admin Panel API (admin login required)
+# ⚙️ API Admin Panel (butuh login admin)
 
-### Users & Roles
+### User & Role
 - `GET /api/user/list`
 - `POST /api/user/add` — `{ "email": "...", "password": "...", "roleId": 2 }`
 - `PUT /api/user/batchSetStatus` — `{ "userIds": [1,2], "status": 1 }`
 - `DELETE /api/user/delete`
 
-### Settings
+### Pengaturan
 - `GET /api/setting/query`
 - `PUT /api/setting/set` — `{ "title": "Monyet Mail" }`
 - `GET /api/setting/websiteConfig` (no auth)
 - `POST /api/setting/globalToken/generate`
 - `PUT /api/setting/globalToken/enabled` — `{ "enabled": true }`
 
-### Invite Codes
+### Kode Registrasi
 - `POST /api/regKey/add` — `{ "count": 10, "roleId": 2 }`
 - `GET /api/regKey/list`
 
-### Others
-- `GET /api/analysis/echarts` — dashboard stats
-- `GET /api/allEmail/list` — all emails (admin)
+### Lainnya
+- `GET /api/analysis/echarts` — statistik dashboard
+- `GET /api/allEmail/list` — semua email (admin)
 - `GET /api/sub-worker/list`
 - `POST /api/sub-worker/add` — `{ "name": "...", "workerUrl": "...", "apiToken": "..." }`
 - `GET /api/telegram/getEmail/:token`
 - `POST /api/webhooks`
-- `GET /api/init/:secret` — DB init
+- `GET /api/init/:secret` — inisialisasi DB

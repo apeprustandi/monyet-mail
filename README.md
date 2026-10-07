@@ -1,59 +1,61 @@
 <div align="center">
 
-# Xi-Mail
+# Monyet Mail
 
-**基于 Cloudflare 全家桶的自托管邮箱服务**
+**Self-hosted mail service built entirely on Cloudflare**
 
-二次开发自 [cloud-mail](https://github.com/eoao/cloud-mail)，UI 全面重设计，功能持续扩展
+> Fork of [PastKing/xi-mail](https://github.com/PastKing/xi-mail) with custom modifications
 
-[![Version](https://img.shields.io/badge/Version-v3.5.5-6366f1)](https://github.com/PastKing/xi-mail/releases)
+A fork of [cloud-mail](https://github.com/eoao/cloud-mail) with a full UI redesign and a growing feature set
+
+[![Version](https://img.shields.io/badge/Version-v3.5.5-6366f1)](https://github.com/apeprustandi/monyet-mail/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/PastKing/xi-mail?style=flat&color=6366f1)](https://github.com/PastKing/xi-mail/stargazers)
+[![Stars](https://img.shields.io/github/stars/PastKing/xi-mail?style=flat&color=6366f1)](https://github.com/apeprustandi/monyet-mail/stargazers)
 [![Telegram](https://img.shields.io/badge/Telegram-@pk__oa-26A5E4?logo=telegram)](https://t.me/pk_oa)
 
-[简体中文](README.md) | [English](README-en.md)
+[English](README.md) | [Indonesia](README-ID.md)
 
 </div>
 
-只需一个托管在 Cloudflare 的域名，即可免费部署一套支持多账户、多域名、层级权限的完整邮箱平台。运行在 Workers + D1 + KV + R2 之上，无服务器成本。
+With a single domain hosted on Cloudflare you can deploy a complete mail platform — multi-account, multi-domain, tiered permissions — at no cost. It runs on Workers + D1 + KV + R2, with no servers to maintain.
 
 ---
 
-## 📸 预览
+## 📸 Preview
 
-| 登录模板 | 浮岛导航 |
+| Login template | Floating Island |
 |:---:|:---:|
-| ![分栏登录模板](doc/images/template/Split.png) | ![浮岛导航](doc/images/layout/FloatingIsland.png) |
-| **域名管理** | **数据分析** |
-| ![域名管理](doc/images/system-setting-domain.png) | ![数据分析](doc/images/analysis.png) |
+| ![Split login template](doc/images/template/Split.png) | ![Floating Island navigation](doc/images/layout/FloatingIsland.png) |
+| **Domain management** | **Analytics** |
+| ![Domain management](doc/images/system-setting-domain.png) | ![Analytics](doc/images/analysis.png) |
 
-更多模板、布局与功能截图见 [界面预览](doc/PREVIEW.md)。
+More templates, layouts and feature screenshots: [Screenshots](doc/PREVIEW.md).
 
-## 🔑 在线体验
+## 🔑 Live demo
 
-演示站 [mail.azx.us](https://mail.azx.us)，用注册码 `viewUser` 注册（仅限 `@nlfree.me` 后缀）。仅供预览，请勿存放真实邮件。
+Try it at [mail.azx.us](https://mail.azx.us) using invite code `viewUser` (limited to the `@nlfree.me` suffix). For preview only — do not store real mail there.
 
 ---
 
-## ✨ 主要特性
+## ✨ Highlights
 
-**界面**
-9 套拥有独立构图的登录模板（包含拆信、邮件终端和邮政护照）+ 6 套主题色，四种登录后布局（完整侧边栏 / 图标侧边栏 / 顶栏导航 / 浮岛导航），全部在系统设置中一键切换并持久化。浮岛布局在桌面端使用悬浮轨道，手机端自动切换为底部 Dock。图标统一使用 `mingcute`，中英文双语，语言偏好随账号跨设备同步。
+**Interface**
+Nine login templates with genuinely different compositions, including Open Letter, Mail Terminal and Postal Passport, and six color themes, plus four post-login layouts (full sidebar, icon-only sidebar, top navigation and Floating Island), all switchable from system settings and persisted server-side. Floating Island uses a detached rail on desktop and a bottom dock on mobile. Icons are unified on `mingcute`; the UI ships in English and Chinese, and the language preference follows the account across devices.
 
-**用户与账号**
-用户 ID 为随机字母数字组合并支持点击复制；单用户最多 100 个邮箱账号，删除后可重建；支持将邮箱连同全部邮件转移给其他用户，接收方可确认或拒绝；角色带 `level` 字段，只能签发权限低于自己的邀请码。
+**Users and accounts**
+User IDs are random alphanumeric strings and can be copied with one click. Each user can hold up to 100 mailbox accounts, and a deleted mailbox can be recreated. Mailboxes can be transferred to another user along with all their mail, subject to the recipient's approval. Roles carry a `level` field, so a user can only issue invite codes for roles below their own.
 
-**收发控制**
-发件人域名过滤支持黑名单 / 白名单两种模式，白名单模式下只接收授权服务商的邮件；同时校验 SMTP 信封发件人与邮件头 From 地址，支持子域名匹配。另有邮件地址关键词黑名单、注册码提示与获取链接（中英文分别配置）。
+**Delivery control**
+Sender-domain filtering runs in either blacklist or whitelist mode; in whitelist mode only authorized providers are accepted. Both the SMTP envelope sender and the header `From` address are checked, with subdomain matching. There is also an address keyword blacklist and configurable invite-code hints and links (separately for English and Chinese).
 
-**域名管理**
-无需改 `wrangler.toml`，在系统设置中直接增删域名、启用禁用，并可拖拽或用上下按钮排序 —— 顺序即注册页邮箱后缀的展示顺序，第一个为默认值。
+**Domain management**
+No need to edit `wrangler.toml` — add, remove, enable and disable domains directly in system settings, and reorder them by dragging or with the up/down buttons. That order is exactly the order of mailbox suffixes on the registration page, with the first entry as the default.
 
-**部署形态**
-支持前后端一体部署，也支持 `build:standalone` 构建纯静态前端部署到 CF Pages / Vercel。前端可同时连接多个 Worker 实例并聚合数据；`mail-worker-sub/` 提供轻量子 Worker 模板，只负责收信和 API，不含用户系统与页面。
+**Deployment shapes**
+Deploy the frontend and Worker together, or run `build:standalone` to produce a static frontend for CF Pages, Vercel or any static host. The frontend can connect to several Worker instances at once and aggregate their data, and `mail-worker-sub/` provides a lightweight sub-worker template that only receives mail and serves the API — no user system, no pages.
 
-**运维接口**
-可生成全局 API Token，用 `x-admin-auth` 请求头免登录查询邮件：
+**Admin API**
+Generate a global API token and query mail without logging in via the `x-admin-auth` header:
 
 ```http
 GET /api/admin/mails?limit=20&offset=0&address=user@domain.com
@@ -62,98 +64,98 @@ x-admin-auth: <your-token>
 
 ---
 
-## 🚀 部署
+## 🚀 Deployment
 
-前置条件：Node.js ≥ 20、已 `npx wrangler login`、一个托管在 Cloudflare 并开启 Email Routing 的域名。
+Prerequisites: Node.js ≥ 20, `npx wrangler login` completed, and a domain hosted on Cloudflare with Email Routing enabled.
 
 ```bash
-git clone https://github.com/PastKing/xi-mail.git
-cd xi-mail/mail-worker && npm install
+git clone https://github.com/apeprustandi/monyet-mail.git
+cd monyet-mail/mail-worker && npm install
 
-# 创建 Cloudflare 资源，记录输出的 ID
+# Create Cloudflare resources and note the returned IDs
 npx wrangler d1 create xi-mail
 npx wrangler kv namespace create kv
 npx wrangler r2 bucket create xi-mail
 
-# 填写配置
+# Fill in the configuration
 cp wrangler.example.toml wrangler.toml
 
-# 构建前端并部署
+# Build the frontend and deploy
 cd ../mail-view && npm install && npm run build
 cd ../mail-worker && npx wrangler deploy
 ```
 
-部署完成后访问 `https://your-worker.workers.dev/api/init/<JWT_SECRET>` 初始化 / 迁移数据库表结构。
+After deploying, visit `https://your-worker.workers.dev/api/init/<JWT_SECRET>` to initialize or migrate the database schema.
 
-`wrangler.toml` 关键字段：
+Key `wrangler.toml` fields:
 
 ```toml
 [vars]
-domain      = ["mail.example.com"]   # 域名列表；改用系统设置管理域名后可留空
-admin       = "admin@example.com"    # 管理员邮箱，初始化后无法更改
-jwt_secret  = "your-secret"          # JWT 密钥，至少 32 位随机字符串
+domain      = ["mail.example.com"]   # Domain list; may be left empty once domains are managed in system settings
+admin       = "admin@example.com"    # Admin address, immutable after initialization
+jwt_secret  = "your-secret"          # JWT secret, at least 32 random characters
 ```
 
-### 独立部署前端
+### Standalone frontend
 
 ```bash
 cd mail-view
 VITE_BASE_URL=https://your-worker.workers.dev/api npm run build:standalone
-# 将 dist/ 部署到 CF Pages / Vercel 等静态托管
+# Deploy dist/ to CF Pages, Vercel or any static host
 ```
 
-未配置 `VITE_BASE_URL` 时，首次打开会跳转 `/setup` 引导手动填写 Worker 地址。
+Without `VITE_BASE_URL`, the first visit redirects to `/setup` so the Worker address can be entered manually.
 
-更详细的部署说明可参考上游项目 [cloud-mail 文档](https://github.com/eoao/cloud-mail)。
+For a more detailed walkthrough, see the upstream [cloud-mail docs](https://github.com/eoao/cloud-mail).
 
 ---
 
-## 📋 版本记录
+## 📋 Release history
 
-| 版本 | 要点 |
-|------|------|
-| **v3.5.5** | 修复潜在的安全风险 |
-| **v3.5.4** | 手机底栏没有其他可去页面时，不再显示「更多」按钮 |
-| **v3.5.3** | 验证码识别更准：不再误抓链接参数，也不会把验证码截成半截 |
-| **v3.5.2** | 浮岛导航常驻邮箱转移，个人设置排在其下；用户 ID 提到邮箱上方；3.4.x 版本记录合并 |
-| **v3.5.1** | 验证码识别默认开启，入口移到服务集成；支持选择 Workers AI 模型，改为模型优先、失败才回退正则；子 Worker 支持子地址查询与按天数自动清理 |
-| **v3.5.0** | 邮件列表只查摘要字段并懒加载正文，补齐数据库索引；新增自动清理邮件、同步删除开关、验证码识别一键复制、子地址投递与新邮件通知 |
-| **v3.4.x** | 浮岛导航（桌面窄轨 + 移动底栏）与 9 套登录模板；系统设置拆分子页、域名内联排序；禁止主账号转移；正文插图一步插入并修复发送丢图 |
-| **v3.3.x** | 发件人白名单模式；黑白名单合并入同一入口；`/settings` 重排与 ID 点击复制；图标与尺寸统一 |
-| **v3.2.x** | 发件人域名屏蔽修复（信封 + From 双检）；侧边栏收窄至 200px |
-| **v3.1.0** | 子 Worker 聚合；语言偏好持久化到用户账号 |
-| **v3.0.0** | 前后端分离；多 Server 架构；standalone 独立部署 |
-| **v2.0.0** | 外观模板系统；登录后主布局切换；系统设置页重构 |
-
----
-
-## 🛠️ 技术栈与结构
-
-后端 Cloudflare Workers + Hono + Drizzle ORM + D1 / KV / R2；前端 Vue 3 + Vite + Element Plus + Pinia + TailwindCSS 4 + vue-i18n。
-
-```
-xi-mail/
-├── mail-worker/       # 主 Worker：API、业务逻辑、鉴权、数据库迁移
-├── mail-view/         # Vue 3 前端：布局、页面、登录模板、主题色、i18n
-├── mail-worker-sub/   # 子 Worker 模板：仅收信 + API，附部署与接口文档
-└── doc/images/        # 截图
-```
+| Version | Summary |
+|---------|---------|
+| **v3.5.5** | Fixed potential security risks |
+| **v3.5.4** | The mobile dock hides the "More" button when there is nowhere else to go |
+| **v3.5.3** | More accurate verification codes: no more truncated codes or URL tokens mistaken as OTPs |
+| **v3.5.2** | Floating Island now pins mailbox transfer on the rail above Settings; user ID sits above the email; 3.4.x release notes collapsed |
+| **v3.5.1** | Code extraction is on by default under Integrations, with a Workers AI model picker; the model runs first and regex is only a fallback; sub-worker now supports plus-address queries and day-based auto cleanup |
+| **v3.5.0** | Email lists now fetch summary columns with lazy-loaded bodies plus new database indexes; added auto email cleaning, hard-delete switch, verification code extraction with one-click copy, sub-addressing and new email notifications |
+| **v3.4.x** | Floating Island (desktop rail + mobile dock) and nine login templates; settings split into sub-pages with inline domain sorting; primary-mailbox transfers blocked; one-step inline images and send-loss fixes |
+| **v3.3.x** | Sender whitelist mode; blacklist and whitelist merged into one entry point; `/settings` reordered with click-to-copy IDs; icon set and sizes unified |
+| **v3.2.x** | Sender-domain blocking fixed (envelope + header `From`); sidebar narrowed to 200px |
+| **v3.1.0** | Sub-worker aggregation; language preference persisted to the user account |
+| **v3.0.0** | Frontend/backend split; multi-server architecture; standalone deployment |
+| **v2.0.0** | Appearance template system; switchable post-login layout; system settings rewrite |
 
 ---
 
-## 💬 社区与支持
+## 🛠️ Stack and layout
 
-[GitHub](https://github.com/PastKing/xi-mail) · [Telegram @pk_oa](https://t.me/pk_oa) · 上游项目 [eoao/cloud-mail](https://github.com/eoao/cloud-mail)
+Backend: Cloudflare Workers with Hono, Drizzle ORM and D1 / KV / R2. Frontend: Vue 3, Vite, Element Plus, Pinia, TailwindCSS 4 and vue-i18n.
 
-若本项目对你有帮助，欢迎捐赠 USDT 支持持续开发：
+```
+monyet-mail/
+├── mail-worker/       # Main worker: API, business logic, auth, migrations
+├── mail-view/         # Vue 3 frontend: layout, pages, login templates, themes, i18n
+├── mail-worker-sub/   # Sub-worker template: mail receiving + API, with its own docs
+└── doc/images/        # Screenshots
+```
 
-| 网络 | 地址 |
-|------|------|
+---
+
+## 💬 Community and support
+
+[GitHub](https://github.com/apeprustandi/monyet-mail) · [Telegram @pk_oa](https://t.me/pk_oa) · upstream [eoao/cloud-mail](https://github.com/eoao/cloud-mail)
+
+If this project helps you, USDT donations are welcome:
+
+| Network | Address |
+|---------|---------|
 | BEP20 (BSC) | `0x555390f5c07cf76cc344f42612196e8669e3586b` |
 | TRC20 (TRON) | `TVqK4thJCsaaWvp1Dah9F5CFZ1iqw75f4G` |
 
 ---
 
-## 📄 许可证
+## 📄 License
 
-[MIT License](LICENSE)。上游项目 [eoao/cloud-mail](https://github.com/eoao/cloud-mail) 同样采用 MIT 许可证，本项目保留其原始版权声明。
+[MIT License](LICENSE). The upstream project [eoao/cloud-mail](https://github.com/eoao/cloud-mail) is also MIT licensed, and its original copyright notice is preserved here.
