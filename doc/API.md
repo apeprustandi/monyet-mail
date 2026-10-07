@@ -97,6 +97,61 @@ Response `data`:
 }
 ```
 
+
+### POST `/api/admin/mails`
+Inject/bikin email manual ke inbox alamat tertentu (buat testing/notifikasi).
+```json
+// Request
+{
+  "toEmail": "user@monyet.dev",
+  "sendEmail": "system@monyet.dev",
+  "name": "System",
+  "subject": "Halo",
+  "text": "Isi pesan",
+  "content": "<p>Isi HTML</p>"
+}
+// Response data: { "emailId": 123 }
+```
+
+### DELETE `/api/admin/mails`
+Hapus email by ID atau by alamat.
+```json
+// By ID
+{ "emailIds": "1,2,3" }
+// By address (hapus semua milik alamat tsb)
+{ "address": "user@monyet.dev" }
+```
+
+### PUT `/api/admin/mails/read`
+Tandai dibaca/belum dibaca.
+```json
+{ "emailIds": "1,2,3", "unread": 0 }
+// unread: 0 = sudah dibaca, 1 = belum dibaca
+```
+
+### GET `/api/admin/users`
+List user.
+| Param | Default |
+|-------|---------|
+| limit | 20 (max 100) |
+| offset | 0 |
+| keyword | cari email |
+
+### POST `/api/admin/users`
+Tambah user baru (+ mailbox otomatis).
+```json
+{ "email": "baru@monyet.dev", "password": "min6karakter", "roleId": 2 }
+```
+
+### DELETE `/api/admin/users`
+Hapus user.
+```json
+// By email
+{ "email": "user@monyet.dev" }
+// By IDs
+{ "userIds": [1, 2] }
+```
+
 ---
 
 ## Public API (tanpa auth)
