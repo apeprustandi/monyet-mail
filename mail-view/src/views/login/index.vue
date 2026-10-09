@@ -322,6 +322,9 @@ AUTH  WAITING
         </Transition>
       </div>
 
+      <div class="temp-access-link">
+        <router-link to="/access">{{ $t('tempMailbox') }} — {{ $t('accessInbox') }}</router-link>
+      </div>
 
     </div>
 
@@ -731,6 +734,18 @@ function submitRegister() {
 }
 
 /* ── Auth card ── */
+.temp-access-link {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13px;
+}
+.temp-access-link a {
+  color: #409eff;
+  text-decoration: none;
+}
+.temp-access-link a:hover {
+  text-decoration: underline;
+}
 .auth-card {
   width: 100%;
   max-width: 400px;

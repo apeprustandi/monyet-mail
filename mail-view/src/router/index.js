@@ -71,6 +71,12 @@ const routes = [
         component: () => import('@/views/login/index.vue')
     },
     {
+        path: '/access',
+        name: 'access',
+        component: () => import('@/views/access/index.vue'),
+        meta: { public: true }
+    },
+    {
         path: '/setup',
         name: 'setup',
         component: () => import('@/views/setup/index.vue')
@@ -123,11 +129,14 @@ router.beforeEach((to, from, next) => {
 
     const token = serverStore.getToken()
 
-    if (!token && to.name !== 'login' && to.name !== 'setup') {
+    // Halaman publik: /access bisa dibuka tanpa login (via access token)
+    const isPublicPage = to.meta?.public === true;
+
+    if (!token && !isPublicPage && to.name !== 'login' && to.name !== 'setup') {
         return next({name: 'login'})
     }
 
-    if (!token && to.name === 'login') {
+    if (!token && (to.name === 'login' || isPublicPage)) {
         loadBackground(next)
         return
     }
