@@ -692,8 +692,19 @@ onMounted(async () => {
       padding: 18px 16px;
     }
   }
+  /* Mobile: input + domain tetap 1 baris, domain menyempit */
+  .email-row {
+    flex-direction: row;
+  }
+  .email-combined {
+    min-width: 0;
+  }
   .domain-select-inner {
-    width: 140px;
+    width: 118px;
+  }
+  .domain-select-inner .el-input__inner {
+    font-size: 12px;
+    padding: 0 4px;
   }
   .btn-row {
     flex-direction: column;
