@@ -1,0 +1,51 @@
+name = "monyet-mail"
+main = "src/index.js"
+compatibility_date = "2025-06-04"
+keep_vars = true
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "db"
+database_name = "monyet-mail"
+database_id = "a0a62549-2fd8-40f1-af3a-c71a7e7b0699"
+
+[[kv_namespaces]]
+binding = "kv"
+id = "c0b03ccd26c24f76a597f8f8fbbed5a2"
+
+[[r2_buckets]]
+binding = "r2"
+bucket_name = "monyet-mail"
+
+# ── Static assets (一体化部署模式) ──
+# 如果前后端分离部署（mail-view 单独部署到 Pages / Vercel 等），
+# 注释掉下方整个 [assets] 块即可，Worker 将作为纯 API 运行。
+[assets]
+binding = "assets"
+directory = "./dist"
+not_found_handling = "single-page-application"
+run_worker_first = true
+
+[triggers]
+crons = ["0 16 * * *"]
+routes = [
+  { pattern = "racun.dev", custom_domain = true },
+  { pattern = "www.racun.dev", custom_domain = true },
+]
+
+
+[vars]
+orm_log = false
+domain = ["racun.dev"]
+admin = "admin@racun.dev"
+jwt_secret = "f56deb17a97dd6363d0a3e0acd4e228350e28d7540c01bb85ad77e2d2b2c8b2d"
+
+# Uncomment to enable OAuth (LinuxDo)
+# linuxdo_switch = "false"
+# linuxdo_client_id = "<YOUR_LINUXDO_CLIENT_ID>"
+# linuxdo_callback_url = "https://your-worker.workers.dev/oauth/linuxdo/callback"
+
+# [build]
+# command = "pnpm --prefix ../mail-view install && pnpm --prefix ../mail-view run build"

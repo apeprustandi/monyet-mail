@@ -138,6 +138,95 @@ const emailService = {
 		return { list, total: totalRow.total, latestEmail };
 	},
 
+	/**
+	 * List email untuk akses via access token (tanpa login).
+	 * Hanya email milik accountId tersebut yang dikembalikan.
+	 */
+	async listByAccessToken(c, accountId, params = {}) {
+		let { emailId, size, timeSort } = params;
+
+		size = Number(size);
+		emailId = Number(emailId);
+		timeSort = Number(timeSort);
+
+		if (!size || size > 50) {
+			size = 50;
+		}
+
+		if (!emailId) {
+			emailId = timeSort ? 0 : 9999999999;
+		}
+
+		const query = orm(c)
+			.select({ ...emailBriefColumns })
+			.from(email)
+			.where(
+				and(
+					eq(email.accountId, accountId),
+					timeSort ? gt(email.emailId, emailId) : lt(email.emailId, emailId),
+					eq(email.isDel, isDel.NORMAL)
+				)
+			);
+
+		if (timeSort) {
+			query.orderBy(asc(email.emailId));
+		} else {
+			query.orderBy(desc(email.emailId));
+		}
+
+		const list = await query.limit(size).all();
+
+		const totalRow = await orm(c).select({ total: count() }).from(email)
+			.where(and(eq(email.accountId, accountId), eq(email.isDel, isDel.NORMAL)))
+			.get();
+
+		return { list, total: totalRow.total };
+	},
+
+	/**
+	 * Ambil konten satu email via access token.
+	 * Pastikan email milik accountId tersebut.
+	 */
+	async contentByAccessToken(c, accountId, emailId) {
+		emailId = Number(emailId);
+
+		const emailRow = await orm(c).select({
+			emailId: email.emailId,
+			accountId: email.accountId,
+			content: email.content,
+			text: email.text
+		}).from(email).where(
+			and(
+				eq(email.emailId, emailId),
+				eq(email.accountId, accountId),
+				eq(email.isDel, isDel.NORMAL)
+			)).get();
+
+		if (!emailRow) {
+			throw new BizError(t('unauthorized'), 404);
+		}
+
+		return {
+			emailId: emailRow.emailId,
+			content: emailRow.content,
+			text: emailRow.text
+		};
+	},
+
+	/**
+	 * Soft delete email milik accountId tertentu (untuk public flow via token).
+	 */
+	async deleteByAccount(c, accountId, emailIdList) {
+		if (!emailIdList || emailIdList.length === 0) {
+			return;
+		}
+		await orm(c).update(email).set({ isDel: isDel.DELETE }).where(
+			and(
+				eq(email.accountId, accountId),
+				inArray(email.emailId, emailIdList))
+			).run();
+	},
+
 	async delete(c, params, userId) {
 		const { emailIds } = params;
 		const emailIdList = emailIds.split(',').map(Number);

@@ -5,6 +5,7 @@ import userService from './user-service';
 import emailService from './email-service';
 import orm from '../entity/orm';
 import account from '../entity/account';
+import { v4 as uuidv4 } from 'uuid';
 import { and, asc, eq, gt, inArray, count, sql, ne, or, lt, desc } from 'drizzle-orm';
 import {accountConst, isDel, settingConst} from '../const/entity-const';
 import settingService from './setting-service';
@@ -14,6 +15,36 @@ import { t } from '../i18n/i18n';
 import verifyRecordService from './verify-record-service';
 
 const accountService = {
+
+	/**
+	 * Generate UUID v4 unik sebagai access token mailbox.
+	 * Cek duplikat di DB, regenerate jika collision (maks 5x).
+	 */
+	async generateAccessToken(c) {
+		for (let i = 0; i < 5; i++) {
+			const token = uuidv4();
+			const existing = await orm(c).select({ accountId: account.accountId })
+				.from(account).where(eq(account.accessToken, token)).get();
+			if (!existing) {
+				return token;
+			}
+		}
+		throw new BizError(t('accessTokenGenFailed'));
+	},
+
+	/**
+	 * Cari akun aktif berdasarkan access token (untuk public flow tanpa login).
+	 */
+	selectByAccessToken(c, token) {
+		if (!token) {
+			return null;
+		}
+		return orm(c).select().from(account).where(
+			and(
+				eq(account.accessToken, token),
+				eq(account.isDel, isDel.NORMAL)
+			)).get();
+	},
 
 	async add(c, params, userId) {
 
@@ -52,8 +83,13 @@ const accountService = {
 
 		if (accountRow && accountRow.isDel === isDel.DELETE) {
 			// 软删除的邮箱允许重新创建：恢复记录并转移到当前用户
+			// Pastikan access token ada (dibuat sekali saat pembuatan akun)
+			let restoreToken = accountRow.accessToken;
+			if (!restoreToken) {
+				restoreToken = await this.generateAccessToken(c);
+			}
 			await orm(c).update(account)
-				.set({ isDel: isDel.NORMAL, userId: userId, name: emailUtils.getName(email) })
+				.set({ isDel: isDel.NORMAL, userId: userId, name: emailUtils.getName(email), accessToken: restoreToken })
 				.where(eq(account.email, email))
 				.run();
 			// 同步恢复该邮箱下的邮件归属
@@ -113,7 +149,12 @@ const accountService = {
 		}
 
 
-		accountRow = await orm(c).insert(account).values({ email: email, userId: userId, name: emailUtils.getName(email) }).returning().get();
+		accountRow = await orm(c).insert(account).values({
+			email: email,
+			userId: userId,
+			name: emailUtils.getName(email),
+			accessToken: await this.generateAccessToken(c)
+		}).returning().get();
 
 		if (addEmailVerify === settingConst.addEmailVerify.COUNT && !addVerifyOpen) {
 			const row = await verifyRecordService.increaseAddCount(c);

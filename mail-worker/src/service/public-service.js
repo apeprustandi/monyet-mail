@@ -11,9 +11,12 @@ import { t } from '../i18n/i18n';
 import settingService from './setting-service';
 import reqUtils from '../utils/req-utils';
 import dayjs from 'dayjs';
-import { isDel, roleConst } from '../const/entity-const';
+import { isDel, roleConst, settingConst } from '../const/entity-const';
 import email from '../entity/email';
+import account from '../entity/account';
 import userService from './user-service';
+import accountService from './account-service';
+import emailService from './email-service';
 import KvConst from '../const/kv-const';
 
 const publicService = {
@@ -190,6 +193,133 @@ const publicService = {
 		if (!await cryptoUtils.verifyPassword(password, userRow.salt, userRow.password)) {
 			throw new BizError(t('IncorrectPwd'));
 		}
+	},
+
+	/**
+	 * Validasi access token dan kembalikan akun mailbox-nya.
+	 * Token salah / akun terhapus -> error inboxNotFound.
+	 */
+	async getAccountByToken(c, key) {
+		if (!key || typeof key !== 'string') {
+			throw new BizError(t('invalidAccessKey'));
+		}
+		const accountRow = await accountService.selectByAccessToken(c, key.trim());
+		if (!accountRow) {
+			throw new BizError(t('inboxNotFound'), 404);
+		}
+		return accountRow;
+	},
+
+	/**
+	 * Buat email sementara TANPA login (public flow, seperti tempamail.com).
+	 * Generate access token UUID unik, tampilkan sekali ke user.
+	 * Duplikat (termasuk soft-deleted) -> error jelas, tidak auto-restore
+	 * demi keamanan (mencegah klaim mailbox milik orang lain).
+	 */
+	async createTempEmail(c, params) {
+		const { addEmail, manyEmail, minEmailPrefix, emailPrefixFilter, domainList } = await settingService.query(c);
+
+		let { email } = params;
+
+		if (!(addEmail === settingConst.addEmail.OPEN && manyEmail === settingConst.manyEmail.OPEN)) {
+			throw new BizError(t('addAccountDisabled'));
+		}
+
+		if (!email) {
+			throw new BizError(t('emptyEmail'));
+		}
+
+		if (!verifyUtils.isEmail(email)) {
+			throw new BizError(t('notEmail'));
+		}
+
+		if (!domainList.includes('@' + emailUtils.getDomain(email))) {
+			throw new BizError(t('notExistDomain'));
+		}
+
+		if (emailUtils.getName(email).length < minEmailPrefix) {
+			throw new BizError(t('minEmailPrefix', { msg: minEmailPrefix }));
+		}
+
+		if (emailPrefixFilter.some(content => emailUtils.getName(email).includes(content))) {
+			throw new BizError(t('banEmailPrefix'));
+		}
+
+		// Cek duplikat termasuk yang soft-deleted -> error jelas (tanpa restore)
+		const existing = await accountService.selectByEmailIncludeDel(c, email);
+		if (existing) {
+			if (existing.isDel === isDel.DELETE) {
+				throw new BizError(t('isRegAccountDeleted'));
+			}
+			throw new BizError(t('isRegAccount'));
+		}
+
+		const accessToken = await accountService.generateAccessToken(c);
+
+		const accountRow = await orm(c).insert(account).values({
+			email: email,
+			userId: 0,
+			name: emailUtils.getName(email),
+			accessToken: accessToken
+		}).returning().get();
+
+		// Kembalikan token sekali — user wajib menyimpannya
+		return { email: accountRow.email, accessToken: accessToken };
+	},
+
+	/**
+	 * Akses inbox via access token (tanpa login).
+	 * Hanya bisa akses mailbox milik token tersebut.
+	 */
+	async accessInbox(c, params) {
+		const { key, emailId, size, timeSort } = params;
+		const accountRow = await this.getAccountByToken(c, key);
+
+		const list = await emailService.listByAccessToken(c, accountRow.accountId, { emailId, size, timeSort });
+
+		return {
+			email: accountRow.email,
+			accessToken: key.trim(),
+			...list
+		};
+	},
+
+	/**
+	 * Hapus email individual via access token (soft delete).
+	 */
+	async deleteEmailByToken(c, params) {
+		const { key, emailIds } = params;
+		const accountRow = await this.getAccountByToken(c, key);
+
+		if (!emailIds) {
+			throw new BizError(t('emptyEmail'));
+		}
+
+		const emailIdList = String(emailIds).split(',').map(Number).filter(n => !isNaN(n));
+		if (emailIdList.length === 0) {
+			throw new BizError(t('emptyEmail'));
+		}
+
+		await emailService.deleteByAccount(c, accountRow.accountId, emailIdList);
+	},
+
+	/**
+	 * Hapus seluruh mailbox sementara via access token (soft delete).
+	 */
+	async deleteMailboxByToken(c, params) {
+		const { key } = params;
+		const accountRow = await this.getAccountByToken(c, key);
+
+		await orm(c).update(account)
+			.set({ isDel: isDel.DELETE })
+			.where(eq(account.accountId, accountRow.accountId))
+			.run();
+
+		// Soft delete juga semua email di mailbox tersebut
+		await orm(c).update(email)
+			.set({ isDel: isDel.DELETE })
+			.where(eq(email.accountId, accountRow.accountId))
+			.run();
 	}
 
 }
