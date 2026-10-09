@@ -38,17 +38,20 @@
               v-model="newPrefix"
               :placeholder="$t('emailPrefixPlaceholder')"
               size="large"
-              class="prefix-input"
+              class="email-combined"
               clearable
-            />
-            <el-select
-              v-model="newDomain"
-              size="large"
-              class="domain-select"
-              :placeholder="$t('domain')"
             >
-              <el-option v-for="d in domains" :key="d" :label="'@' + d" :value="d" />
-            </el-select>
+              <template #append>
+                <el-select
+                  v-model="newDomain"
+                  size="large"
+                  class="domain-select-inner"
+                  :placeholder="$t('domain')"
+                >
+                  <el-option v-for="d in domains" :key="d" :label="'@' + d" :value="d" />
+                </el-select>
+              </template>
+            </el-input>
           </div>
           <div v-if="domains.length" class="domain-hint">
             {{ $t('domainsAvailable', { count: domains.length }) }}
@@ -462,15 +465,22 @@ onMounted(async () => {
 }
 .email-row {
   display: flex;
-  gap: 10px;
 }
-.prefix-input {
+.email-combined {
   flex: 1;
   min-width: 0;
 }
-.domain-select {
-  width: 190px;
-  flex-shrink: 0;
+/* Select di dalam append slot: hilangkan border kiri agar menyatu */
+.email-combined .el-input-group__append {
+  padding: 0;
+  background: #f5f7fa;
+}
+.domain-select-inner {
+  width: 180px;
+}
+.domain-select-inner .el-input__wrapper {
+  box-shadow: none !important;
+  background: transparent;
 }
 .domain-hint {
   font-size: 12px;
@@ -682,11 +692,8 @@ onMounted(async () => {
       padding: 18px 16px;
     }
   }
-  .email-row {
-    flex-direction: column;
-  }
-  .domain-select {
-    width: 100%;
+  .domain-select-inner {
+    width: 140px;
   }
   .btn-row {
     flex-direction: column;
